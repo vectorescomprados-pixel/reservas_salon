@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+    <title>Reservas SUM - Ultra Blindado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg: #0b141a; --card: #111b21; --primary: #2563eb; --danger: #e11d48; --text: #e9edef; --border: #222d34; --success: #22c55e; --ghost: #374151; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+        .wrap { width: 95%; max-width: 450px; margin: 0 auto; padding-top: 20px; }
+        .main-header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--primary); border-radius: 0 0 20px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn { height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; font-size: 12px; }
+        .primary { background: var(--primary); } .danger { background: var(--danger); } .ghost { background: var(--ghost); }
+        .item { background: var(--card); border-radius: 15px; padding: 15px; margin-top: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .item b { color: var(--primary); font-size: 16px; }
+        #log-panel { background: #000; color: #40c4ff; font-family: monospace; font-size: 11px; padding: 10px; border-radius: 10px; margin-top: 10px; max-height: 80px; overflow-y: auto; }
+        .hidden { display: none; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="main-header">
+        <div style="text-align:center; font-size:12px; color:var(--success); margin-bottom:10px;">● SISTEMA DE RESERVAS ACTIVO</div>
+        <div class="grid-btns">
+            <button class="btn primary" onclick="document.getElementById('csv-file').click()">
+                <i class="fas fa-upload"></i> SUBIR CSV
+            </button>
+            <button class="btn danger" onclick="limpiarReservas()">
+                <i class="fas fa-sync"></i> REINICIAR
+            </button>
+        </div>
+        <div id="log-panel">Esperando acciones...</div>
+    </div>
+
+    <input type="file" id="csv-file" accept=".csv">
+    
+    <div id="list">
+        <!-- Las reservas aparecerán aquí -->
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, getDocs, writeBatch, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // USA TUS MISMAS CREDENCIALES AQUÍ
+    const firebaseConfig = { 
+        apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
+        authDomain: "gestionuf-remoto.firebaseapp.com", 
+        projectId: "gestionuf-remoto", 
+        storageBucket: "gestionuf-remoto.firebasestorage.app", 
+        messagingSenderId: "724452752860", 
+        appId: "1:724452752860:web:4d25585addcdcbd146e319" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const MASTER_CODE = "1131552679";
+
+    const writeLog = (m) => {
+        const lp = document.getElementById("log-panel");
+        lp.innerHTML += `<div>> ${m}</div>`;
+        lp.scrollTop = lp.scrollHeight;
+    };
+
+    // 1. OBTENER TELÉFONOS DE LA OTRA COLECCIÓN
+    async function obtenerDirectorio() {
+        const directorio = {};
+        const snap = await getDocs(collection(db, "departamentos"));
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.UF) directorio[d.UF] = d.TelefonoInquilino || "Sin Teléfono";
+        });
+        return directorio;
+    }
+
+    // 2. PROCESAR CSV E IMPORTAR A "reservas_salon"
+    document.getElementById("csv-file").onchange = async (e) => {
+        const directorio = await obtenerDirectorio();
+        const reader = new FileReader();
+        
+        reader.onload = async (ev) => {
+            const lineas = ev.target.result.split("\n").slice(1);
+            writeLog("Importando cronograma...");
+            
+            for (let linea of lineas) {
+                const [fecha, uf] = linea.split(",");
+                if (!fecha || !uf) continue;
+
+                const nroUF = uf.trim();
+                await addDoc(collection(db, "reservas_salon"), {
+                    fecha: fecha.trim(),
+                    uf: nroUF,
+                    telefono: directorio[nroUF] || "No Encontrado",
+                    creadoEl: new Date()
+                });
+            }
+            writeLog("✅ Importación terminada");
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+
+    // 3. MOSTRAR RESERVAS EN TIEMPO REAL
+    onSnapshot(query(collection(db, "reservas_salon"), orderBy("fecha", "asc")), (snap) => {
+        const lista = document.getElementById("list");
+        lista.innerHTML = "";
+        snap.forEach(doc => {
+            const res = doc.data();
+            const telLimpio = res.telefono.replace(/\D/g,'');
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+                <div>
+                    <b>${res.fecha}</b><br>
+                    <small>Unidad: ${res.uf}</small>
+                </div>
+                <a href="https://wa.me/${telLimpio}" target="_blank" class="btn" style="background:var(--success); width:45px">
+                    <i class="fab fa-whatsapp" style="font-size:20px"></i>
+                </a>
+            `;
+            lista.appendChild(div);
+        });
+    });
+
+    // 4. EL BOTÓN DE PÁNICO (VACIAR)
+    window.limpiarReservas = async () => {
+        const p = prompt("Clave Maestra para BORRAR TODO:");
+        if (p !== MASTER_CODE) return alert("Error");
+        
+        const snap = await getDocs(collection(db, "reservas_salon"));
+        const batch = writeBatch(db);
+        snap.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        writeLog("🗑️ Cronograma borrado.");
+    };
+</script>
+
+</body>
+</html>
