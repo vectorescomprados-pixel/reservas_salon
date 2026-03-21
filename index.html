@@ -2,156 +2,141 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM - Sistema de Reservas</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <title>SUM PRO</title>
     
-    <!-- Librerías desde CDN confiable -->
+    <!-- Cargamos las librerías con protocolo seguro explícito -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --red: #e11d48; --text: #e9edef; --border: #222d34; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; }
-        .wrap { width: 95%; max-width: 480px; margin: 0 auto; padding: 10px; }
+        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --text: #e9edef; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; }
+        .app { width: 100%; max-width: 450px; padding: 15px; box-sizing: border-box; }
         
-        /* Cabecera idéntica a tu foto */
-        .header { background: var(--card); padding: 15px; border-bottom: 2px solid var(--blue); border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .status { font-size: 10px; text-align: center; color: #22c55e; margin-bottom: 10px; font-weight: bold; }
-        .btn-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { height: 40px; border-radius: 8px; border: none; font-weight: bold; font-size: 11px; cursor: pointer; color: white; text-transform: uppercase; background: #374151; }
-        .btn-red { background: var(--red); }
+        /* Estética de tu foto */
+        .header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--blue); border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .status { color: #22c55e; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { background: #374151; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        
+        /* El contenedor del calendario debe tener altura fija para forzar el renderizado */
+        #calendar { background: var(--card); border-radius: 12px; padding: 10px; min-height: 500px; border: 1px solid #222d34; }
+        
+        /* Ajustes para que el calendario se vea bien en oscuro */
+        .fc { color: white; }
+        .fc-daygrid-day { min-height: 60px !important; }
+        .fc-button { background: #222d34 !important; border: none !important; }
 
-        /* Calendario visible sí o sí */
-        #calendar { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid var(--border); min-height: 450px; }
-        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid var(--border) !important; }
-        
-        /* Modal */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .modal-card { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; border: 1px solid var(--border); border-left: 5px solid #f59e0b; }
-        
-        #log { background: #000; color: #40c4ff; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; }
-        .hidden { display: none; }
-        select { width: 100%; height: 45px; margin: 15px 0; background: #1a242b; color: #fff; border-radius: 10px; border: 1px solid var(--border); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 999; }
+        .modal-content { background: var(--card); width: 85%; padding: 20px; border-radius: 15px; border-left: 5px solid #f59e0b; }
+        select { width: 100%; padding: 12px; margin: 15px 0; background: #1a242b; color: white; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-    <div class="wrap">
-        <div class="header">
-            <div class="status">● EN LÍNEA - SEGURIDAD ACTIVA</div>
-            <div class="btn-box">
-                <button onclick="location.reload()" class="btn">HISTORIAL</button>
-                <button class="btn btn-red">CERRAR</button>
-            </div>
-            <div id="log">Conectando...</div>
+<div class="app">
+    <div class="header">
+        <div class="status">● EN LÍNEA - SEGURIDAD ACTIVA</div>
+        <div class="btn-grid">
+            <button class="btn" onclick="location.reload()">REINTENTAR</button>
+            <button class="btn" style="background:#e11d48">CERRAR</button>
         </div>
-        <div id="calendar"></div>
+        <div id="debug" style="font-size:10px; color:#40c4ff; margin-top:10px;">Cargando módulos...</div>
     </div>
 
-    <!-- Modal Gestor -->
-    <div id="modal-gestor" class="modal hidden">
-        <div class="modal-card">
-            <h3 id="m-title" style="margin:0; color:var(--blue)">Gestión</h3>
-            <p id="m-date" style="font-size: 12px; color: #8a96a3;"></p>
-            <div id="div-crear">
-                <select id="sel-uf"><option>Cargando unidades...</option></select>
-                <button id="btn-add" class="btn" style="width:100%; background:var(--blue)">AGENDAR</button>
-            </div>
-            <div id="div-borrar" class="hidden">
-                <p id="det-res" style="color:#f59e0b; font-weight:bold"></p>
-                <button id="btn-del" class="btn btn-red" style="width:100%">ELIMINAR</button>
-            </div>
-            <button onclick="cerrarModal()" class="btn" style="width:100%; margin-top:10px; background:none">VOLVER</button>
-        </div>
+    <div id="calendar"></div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h3 id="m-title" style="color:var(--blue); margin-top:0;">Reserva</h3>
+        <p id="m-date" style="font-size:12px; color:#888;"></p>
+        <select id="m-select"><option value="">Cargando UFs...</option></select>
+        <button class="btn" id="m-confirm" style="width:100%; background:var(--blue); margin-bottom:10px;">CONFIRMAR</button>
+        <button class="btn" onclick="closeM()" style="width:100%; background:none; color:#888;">CANCELAR</button>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    // Importación directa para evitar fallos de resolución
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
-            authDomain: "gestionuf-remoto.firebaseapp.com", 
-            projectId: "gestionuf-remoto", 
-            storageBucket: "gestionuf-remoto.firebasestorage.app", 
-            messagingSenderId: "724452752860", 
-            appId: "1:724452752860:web:4d25585addcdcbd146e319" 
-        };
+    const config = { 
+        apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
+        authDomain: "gestionuf-remoto.firebaseapp.com", 
+        projectId: "gestionuf-remoto", 
+        storageBucket: "gestionuf-remoto.firebasestorage.app", 
+        messagingSenderId: "724452752860", 
+        appId: "1:724452752860:web:4d25585addcdcbd146e319" 
+    };
 
-        const app = initializeApp(firebaseConfig);
+    const debug = document.getElementById('debug');
+    
+    try {
+        const app = initializeApp(config);
         const db = getFirestore(app);
-        const PASS = "1131552679";[cite: 1]
-        
-        let ufs = {}, reservas = [], selDate = "";
+        let reservas = [];
+        let ufs = {};
 
-        // Inicializar Calendario INMEDIATAMENTE
-        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        // RENDER INMEDIATO DEL CALENDARIO
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'es',
-            headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-            dateClick: (info) => openModal(info.dateStr)
+            height: 'auto',
+            dateClick: function(info) {
+                document.getElementById('m-date').innerText = info.dateStr;
+                document.getElementById('modal').style.display = 'flex';
+                window.selectedDate = info.dateStr;
+            }
         });
         calendar.render();
+        debug.innerText = "Calendario activo. Conectando DB...";
 
-        // Cargar Datos
-        async function start() {
-            try {
-                const snap = await getDocs(collection(db, "departamentos"));[cite: 1]
-                const sel = document.getElementById("sel-uf");
-                sel.innerHTML = '<option value="">Seleccionar UF...</option>';
-                snap.forEach(d => {
-                    const data = d.data();
-                    const n = data.UF || data.Unidad;
-                    ufs[n] = data.TelefonoInquilino || "Sin tel";[cite: 1]
-                    let o = document.createElement("option"); o.value = n; o.innerText = `UF ${n}`;
-                    sel.appendChild(o);
-                });
-                document.getElementById("log").innerText = "SISTEMA LISTO";
-            } catch (e) { document.getElementById("log").innerText = "ERROR DE CONEXIÓN"; }
-        }
-
-        onSnapshot(collection(db, "reservas_salon"), (snap) => {[cite: 1]
-            reservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            calendar.setOption('events', reservas.map(r => ({
-                title: `UF ${r.uf}`, start: r.fecha, backgroundColor: '#e11d48', borderColor: '#e11d48'
-            })));
+        // CARGAR UFs
+        const snap = await getDocs(collection(db, "departamentos"));
+        const sel = document.getElementById('m-select');
+        sel.innerHTML = '<option value="">Elegir Unidad...</option>';
+        snap.forEach(doc => {
+            const d = doc.data();
+            const n = d.UF || d.Unidad;
+            ufs[n] = d.TelefonoInquilino || "";
+            let opt = document.createElement('option');
+            opt.value = n; opt.innerText = "UF " + n;
+            sel.appendChild(opt);
         });
 
-        function openModal(fecha) {
-            selDate = fecha;
-            const res = reservas.find(r => r.fecha === fecha);
-            document.getElementById("modal-gestor").classList.remove("hidden");
-            document.getElementById("m-date").innerText = "Día: " + fecha;
+        // ESCUCHAR RESERVAS
+        onSnapshot(collection(db, "reservas_salon"), (s) => {
+            reservas = s.docs.map(d => ({...d.data()}));
+            calendar.setOption('events', reservas.map(r => ({
+                title: 'Ocupado UF ' + r.uf,
+                start: r.fecha,
+                color: '#e11d48'
+            })));
+            debug.innerText = "SISTEMA LISTO (OK)";
+        });
 
-            if (res) {
-                document.getElementById("div-crear").classList.add("hidden");
-                document.getElementById("div-borrar").classList.remove("hidden");
-                document.getElementById("det-res").innerText = "OCUPADO POR UF " + res.uf;
-                document.getElementById("btn-del").onclick = () => deleteRes(res.id);
-            } else {
-                document.getElementById("div-crear").classList.remove("hidden");
-                document.getElementById("div-borrar").classList.add("hidden");
-            }
-        }
-
-        document.getElementById("btn-add").onclick = async () => {
-            const val = document.getElementById("sel-uf").value;
-            if(!val) return;
-            await addDoc(collection(db, "reservas_salon"), {[cite: 1]
-                fecha: selDate, uf: val, tel: ufs[val], ts: new Date() 
+        // GUARDAR
+        document.getElementById('m-confirm').onclick = async () => {
+            const u = sel.value;
+            if(!u) return alert("Selecciona UF");
+            await addDoc(collection(db, "reservas_salon"), {
+                fecha: window.selectedDate, uf: u, tel: ufs[u]
             });
-            window.open(`https://wa.me/5491131552679?text=Nueva Reserva SUM: ${selDate} - UF ${val}`);[cite: 1]
-            cerrarModal();
+            window.open(`https://wa.me/5491131552679?text=Reserva SUM: ${window.selectedDate} UF ${u}`);
+            closeM();
         };
 
-        async function deleteRes(id) {
-            if(prompt("CLAVE:") !== PASS) return;[cite: 1]
-            await deleteDoc(doc(db, "reservas_salon", id));[cite: 1]
-            cerrarModal();
-        }
+    } catch (e) {
+        debug.innerText = "ERROR: " + e.message;
+        console.error(e);
+    }
 
-        window.cerrarModal = () => document.getElementById("modal-gestor").classList.add("hidden");
-        start();
-    </script>
+    window.closeM = () => { document.getElementById('modal').style.display = 'none'; };
+</script>
+
 </body>
 </html>
