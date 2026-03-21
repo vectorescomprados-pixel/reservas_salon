@@ -3,45 +3,84 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM Pro - V5.0 Blindado</title>
+    <title>SUM Pro - Gestión de Reservas</title>
     
+    <!-- Librerías Externas -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --bg: #0b141a; --card: #111b21; --primary: #2563eb; --danger: #e11d48; --text: #e9edef; --border: #222d34; --warning: #f59e0b; --success: #22c55e; --ghost: #374151; }
-        body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: contain; }
+        :root { 
+            --bg: #0b141a; --card: #111b21; --primary: #2563eb; 
+            --danger: #e11d48; --text: #e9edef; --border: #222d34; 
+            --success: #22c55e; --ghost: #374151; 
+        }
+
+        body { 
+            margin: 0; padding: 0; background: var(--bg); color: var(--text); 
+            font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: contain;
+        }
         
-        .wrap { width: 95%; max-width: 450px; margin: 0 auto; padding-bottom: 50px; }
-        .main-header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--primary); border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; position: sticky; top:0; z-index:100; }
+        .wrap { width: 95%; max-width: 450px; margin: 0 auto; padding-bottom: 30px; }
+
+        /* Cabecera Estilo App Anterior */
+        .main-header { 
+            background: var(--card); padding: 15px; border-bottom: 3px solid var(--primary); 
+            border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            margin-bottom: 15px; position: sticky; top:0; z-index:100; 
+        }
         
-        /* Estética Foto 2 aplicada al Calendario */
-        #calendar { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid var(--border); font-size: 0.9em; }
+        /* Calendario Custom */
+        #calendar { 
+            background: var(--card); border-radius: 15px; padding: 10px; 
+            border: 1px solid var(--border); font-size: 0.85em;
+        }
+        .fc .fc-toolbar-title { font-size: 1.1em; color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .fc .fc-button-primary { background: var(--ghost); border: none; font-size: 0.8em; font-weight: bold; }
+        .fc .fc-button-primary:disabled { background: #1a242b; opacity: 0.5; }
         .fc-theme-standard td, .fc-theme-standard th { border: 1px solid var(--border) !important; }
-        .fc-day-today { background: rgba(37, 99, 235, 0.15) !important; }
-        .fc-toolbar-title { font-size: 1.1em !important; color: var(--primary); font-weight: bold; text-transform: uppercase; }
-        .fc-button-primary { background: var(--ghost) !important; border: none !important; text-transform: uppercase; font-size: 0.8em !important; font-weight: bold !important; }
+        .fc-daygrid-day:hover { background: rgba(37, 99, 235, 0.1) !important; cursor: pointer; }
+
+        /* Botones y Formulario */
+        .btn { 
+            height: 48px; border-radius: 10px; border: none; font-weight: bold; 
+            font-size: 12px; cursor: pointer; color: white; display: flex; 
+            align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; width: 100%;
+        }
+        .primary { background: var(--primary); }
+        .danger { background: var(--danger); }
+        .ghost { background: var(--ghost); }
+
+        /* Modal */
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); 
+        }
+        .modal-content { 
+            background: var(--card); padding: 25px; border-radius: 20px; 
+            width: 85%; max-width: 350px; border: 1px solid var(--border); text-align: center;
+        }
         
-        /* Botones Estilo Foto 2 */
-        .btn { height: 45px; border-radius: 10px; border: none; font-weight: bold; font-size: 11px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; width: 100%; }
-        .primary { background: var(--primary); } .danger { background: var(--danger); } .warning { background: var(--warning); color: #000; } .ghost { background: var(--ghost); }
-        
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 380px; border: 1px solid var(--border); }
-        input, select { width: 100%; height: 45px; margin-bottom: 12px; border-radius: 10px; border: 1px solid var(--border); padding: 0 12px; background: #1a242b; color: #fff; }
-        
-        .occupied-mark { background: var(--danger) !important; color: white !important; border-radius: 4px; font-size: 0.7em; padding: 2px; text-align: center; }
-        #log-panel { background: #000; color: #40c4ff; font-family: monospace; font-size: 10px; padding: 8px; border-radius: 8px; margin-top: 10px; height: 50px; overflow-y: auto; border: 1px solid #333; }
+        select { 
+            width: 100%; height: 50px; margin: 15px 0; border-radius: 10px; 
+            border: 1px solid var(--border); background: #1a242b; color: #fff; padding: 0 10px; font-size: 16px;
+        }
+
+        #log-panel { 
+            background: #000; color: #40c4ff; font-family: monospace; font-size: 10px; 
+            padding: 8px; border-radius: 8px; margin-top: 10px; height: 45px; overflow-y: auto; border: 1px solid #333; 
+        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="wrap">
         <div class="main-header">
-            <div style="font-size:10px; text-align:center; margin-bottom:10px; color:var(--success)">● EN LÍNEA - SEGURIDAD ACTIVA</div>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="location.reload()" class="btn ghost">REFRESCAR</button>
-                <button id="btn-admin-view" class="btn ghost">ADMINISTRAR</button>
+            <div style="font-size:10px; text-align:center; margin-bottom:8px; color:var(--success)">● SEGURIDAD ACTIVA - CLOUD SYNC</div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="location.reload()" class="btn ghost" style="height: 35px;">REINICIAR</button>
+                <button onclick="window.scrollTo(0, document.body.scrollHeight)" class="btn ghost" style="height: 35px;">INFO</button>
             </div>
             <div id="log-panel">Iniciando sistema...</div>
         </div>
@@ -49,27 +88,33 @@
         <div id="calendar"></div>
     </div>
 
-    <!-- MODAL RESERVA (ESTILO FOTO 2) -->
+    <!-- Modal de Acción -->
     <div id="modal-reserva" class="modal hidden">
         <div class="modal-content">
-            <h3 id="modal-title" style="color:var(--primary); margin-top:0">Nueva Reserva</h3>
-            <p id="fecha-texto" style="font-size: 14px; margin-bottom: 15px; color: var(--success)"></p>
+            <h3 id="modal-title" style="margin:0; color:var(--primary)">Cargando...</h3>
+            <p id="fecha-texto" style="font-size: 13px; color: var(--success); margin: 10px 0;"></p>
             
+            <!-- Crear Reserva -->
             <div id="form-crear">
                 <select id="select-uf">
                     <option value="">Cargando Unidades...</option>
                 </select>
-                <button id="btn-confirmar" class="btn primary">CONFIRMAR Y AVISAR</button>
+                <button id="btn-confirmar" class="btn primary">
+                    <i class="fab fa-whatsapp"></i> AGENDAR Y AVISAR
+                </button>
             </div>
 
+            <!-- Cancelar Reserva -->
             <div id="form-cancelar" class="hidden">
-                <div style="background: #1a242b; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <p id="info-reserva-actual" style="margin:0; font-size: 13px;"></p>
+                <div style="background: #1a242b; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--danger);">
+                    <p id="info-reserva-actual" style="margin:0; font-size: 14px; font-weight: bold;"></p>
                 </div>
-                <button id="btn-cancelar-reserva" class="btn danger">CANCELAR ESTA RESERVA</button>
+                <button id="btn-cancelar-reserva" class="btn danger">
+                    <i class="fas fa-trash"></i> ELIMINAR RESERVA
+                </button>
             </div>
 
-            <button onclick="cerrarModal()" class="btn ghost" style="margin-top:10px">VOLVER</button>
+            <button onclick="cerrarModal()" class="btn ghost" style="margin-top:12px">VOLVER</button>
         </div>
     </div>
 
@@ -77,8 +122,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
             authDomain: "gestionuf-remoto.firebaseapp.com", 
@@ -91,73 +137,84 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- CONFIGURACIÓN DE ADMINISTRACIÓN ---
+        // CONFIGURACIÓN ADMIN
         const TEL_ADMINISTRACION = "5491131552679"; 
-        const MASTER_CODE = "1131552679";[cite: 1]
+        const MASTER_CODE = "1131552679"; 
         
-        let directorio = {}, reservasActuales = [], fechaSel = "";
+        let directorio = {}; 
+        let reservasActuales = []; 
+        let fechaSel = "";
 
         const writeLog = (m) => {
             const lp = document.getElementById("log-panel");
-            lp.innerHTML += `<div>» ${m}</div>`; lp.scrollTop = lp.scrollHeight;
+            lp.innerHTML += `<div>» ${m}</div>`; 
+            lp.scrollTop = lp.scrollHeight;
         };
 
-        // Cargar UFs desde tu base original
+        // CARGAR UF DESDE LA BASE DE DATOS
         async function cargarDirectorio() {
-            const snap = await getDocs(collection(db, "departamentos"));
             const select = document.getElementById("select-uf");
-            select.innerHTML = '<option value="">Seleccione UF...</option>';
-            snap.forEach(d => {
-                const data = d.data();
-                directorio[data.UF] = data.TelefonoInquilino || "Sin Teléfono";
-                let opt = document.createElement("option"); opt.value = data.UF; opt.innerText = `UF ${data.UF}`;
-                select.appendChild(opt);
-            });
-            writeLog("Base de UFs vinculada.");
+            try {
+                const snap = await getDocs(collection(db, "departamentos"));
+                if (snap.empty) {
+                    writeLog("⚠️ Colección vacía.");
+                    select.innerHTML = '<option value="">Sin datos en BD</option>';
+                    return;
+                }
+                select.innerHTML = '<option value="">Elegir Unidad...</option>';
+                snap.forEach(d => {
+                    const data = d.data();
+                    const num = data.UF || data.Unidad;
+                    directorio[num] = data.TelefonoInquilino || "Sin número";
+                    let opt = document.createElement("option");
+                    opt.value = num;
+                    opt.innerText = `UF ${num} - ${data.Apellido || ''}`;
+                    select.appendChild(opt);
+                });
+                writeLog("✅ Unidades cargadas.");
+            } catch (e) {
+                writeLog("❌ Error cargando base.");
+            }
         }
 
-        // Inicializar Calendario FullCalendar
+        // INICIALIZAR CALENDARIO
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'es',
-            firstDay: 1,
             headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-            dateClick: (info) => manejarClickFecha(info.dateStr),
+            dateClick: (info) => abrirGestor(info.dateStr),
             events: []
         });
         calendar.render();
 
-        // Escuchar Reservas (Nueva Colección)
+        // SINCRONIZAR RESERVAS EN TIEMPO REAL
         onSnapshot(collection(db, "reservas_salon"), (snap) => {
             reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             const evts = reservasActuales.map(r => ({
                 title: `OCUPADO - UF ${r.uf}`,
                 start: r.fecha,
-                className: 'occupied-mark',
-                allDay: true,
-                extendedProps: { resId: r.id, uf: r.uf }
+                display: 'block',
+                backgroundColor: '#e11d48',
+                borderColor: '#e11d48'
             }));
             calendar.setOption('events', evts);
-            writeLog("Cronograma sincronizado.");
         });
 
-        function manejarClickFecha(fecha) {
+        function abrirGestor(fecha) {
             fechaSel = fecha;
-            const reservaExistente = reservasActuales.find(r => r.fecha === fecha);
-            
-            document.getElementById("modal-reserva").classList.remove("hidden");
-            document.getElementById("fecha-texto").innerText = `Día: ${fecha}`;
+            const res = reservasActuales.find(r => r.fecha === fecha);
+            const modal = document.getElementById("modal-reserva");
+            modal.classList.remove("hidden");
+            document.getElementById("fecha-texto").innerText = `Fecha: ${fecha}`;
 
-            if (reservaExistente) {
-                // Modo Cancelación
-                document.getElementById("modal-title").innerText = "Reserva Existente";
+            if (res) {
+                document.getElementById("modal-title").innerText = "Día Ocupado";
                 document.getElementById("form-crear").classList.add("hidden");
                 document.getElementById("form-cancelar").classList.remove("hidden");
-                document.getElementById("info-reserva-actual").innerText = `Ocupado por UF: ${reservaExistente.uf}`;
-                document.getElementById("btn-cancelar-reserva").onclick = () => cancelarReserva(reservaExistente.id);
+                document.getElementById("info-reserva-actual").innerText = `Reservado por UF ${res.uf}`;
+                document.getElementById("btn-cancelar-reserva").onclick = () => eliminarReserva(res.id);
             } else {
-                // Modo Creación
                 document.getElementById("modal-title").innerText = "Nueva Reserva";
                 document.getElementById("form-crear").classList.remove("hidden");
                 document.getElementById("form-cancelar").classList.add("hidden");
@@ -166,36 +223,34 @@
 
         document.getElementById("btn-confirmar").onclick = async () => {
             const uf = document.getElementById("select-uf").value;
-            if (!uf) return alert("Seleccione una Unidad");
+            if (!uf) return alert("Selecciona una UF");
 
             try {
-                const telInq = directorio[uf] || "No registrado";
+                const tel = directorio[uf] || "No reg.";
                 await addDoc(collection(db, "reservas_salon"), {
                     fecha: fechaSel,
                     uf: uf,
-                    telInquilino: telInq,
+                    tel: tel,
                     timestamp: new Date()
                 });
 
-                // Enviar WhatsApp a Administración
-                const msj = `*AVISO DE RESERVA SUM*%0A📅 Fecha: ${fechaSel}%0A🏢 UF: ${uf}%0A📱 Tel. Inquilino: ${telInq}`;
+                const msj = `*RESERVA SUM*%0A📅 Fecha: ${fechaSel}%0A🏢 UF: ${uf}%0A📱 Contacto: ${tel}`;
                 window.open(`https://wa.me/${TEL_ADMINISTRACION}?text=${msj}`, '_blank');
-                
                 cerrarModal();
-                writeLog(`Reserva UF ${uf} exitosa.`);
             } catch (e) { alert("Error al guardar"); }
         };
 
-        async function cancelarReserva(id) {
-            const p = prompt("Ingrese CLAVE MAESTRA para cancelar:");[cite: 1]
-            if (p !== MASTER_CODE) return alert("Código incorrecto");
+        async function eliminarReserva(id) {
+            const pass = prompt("CLAVE MAESTRA:");
+            if (pass !== MASTER_CODE) return alert("Código incorrecto");
             
             await deleteDoc(doc(db, "reservas_salon", id));
-            writeLog("Reserva cancelada.");
+            writeLog("Reserva eliminada.");
             cerrarModal();
         }
 
         window.cerrarModal = () => document.getElementById("modal-reserva").classList.add("hidden");
+        
         cargarDirectorio();
     </script>
 </body>
