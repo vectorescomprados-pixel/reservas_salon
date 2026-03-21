@@ -2,47 +2,47 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-    <title>SUM PRO</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+    <title>SUM PRO - Gestión Total</title>
     
-    <!-- Cargamos las librerías con protocolo seguro explícito -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
-        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --text: #e9edef; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; }
+        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --text: #e9edef; --red: #e11d48; --orange: #f59e0b; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; }
         .app { width: 100%; max-width: 450px; padding: 15px; box-sizing: border-box; }
         
-        /* Estética de tu foto */
-        .header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--blue); border-radius: 12px; margin-bottom: 20px; text-align: center; }
-        .status { color: #22c55e; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
+        .header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--blue); border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .status { color: #22c55e; font-size: 11px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { background: #374151; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .btn { background: #374151; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.3s; }
+        .btn:active { transform: scale(0.95); opacity: 0.8; }
         
-        /* El contenedor del calendario debe tener altura fija para forzar el renderizado */
         #calendar { background: var(--card); border-radius: 12px; padding: 10px; min-height: 500px; border: 1px solid #222d34; }
-        
-        /* Ajustes para que el calendario se vea bien en oscuro */
-        .fc { color: white; }
-        .fc-daygrid-day { min-height: 60px !important; }
-        .fc-button { background: #222d34 !important; border: none !important; }
+        .fc { color: white; --fc-border-color: #222d34; --fc-button-bg-color: #374151; --fc-button-border-color: #374151; }
+        .fc-toolbar-title { font-size: 1.2em !important; color: var(--blue); }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 999; }
-        .modal-content { background: var(--card); width: 85%; padding: 20px; border-radius: 15px; border-left: 5px solid #f59e0b; }
-        select { width: 100%; padding: 12px; margin: 15px 0; background: #1a242b; color: white; border-radius: 8px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 999; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); width: 85%; padding: 25px; border-radius: 20px; border-left: 5px solid var(--orange); position: relative; }
+        
+        select { width: 100%; padding: 15px; margin: 15px 0; background: #1a242b; color: white; border-radius: 10px; border: 1px solid #333; font-size: 16px; }
+        
+        .hidden { display: none; }
+        #debug { font-size: 10px; color: #40c4ff; margin-top: 10px; font-family: monospace; }
+        .info-box { background: #1a242b; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px dashed #444; }
     </style>
 </head>
 <body>
 
 <div class="app">
     <div class="header">
-        <div class="status">● EN LÍNEA - SEGURIDAD ACTIVA</div>
+        <div class="status">● PANEL DE CONTROL - SUM</div>
         <div class="btn-grid">
-            <button class="btn" onclick="location.reload()">REINTENTAR</button>
-            <button class="btn" style="background:#e11d48">CERRAR</button>
+            <button class="btn" onclick="location.reload()">ACTUALIZAR</button>
+            <button class="btn" style="background:var(--red)" onclick="window.close()">SALIR</button>
         </div>
-        <div id="debug" style="font-size:10px; color:#40c4ff; margin-top:10px;">Cargando módulos...</div>
+        <div id="debug">Sincronizando...</div>
     </div>
 
     <div id="calendar"></div>
@@ -50,18 +50,35 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="m-title" style="color:var(--blue); margin-top:0;">Reserva</h3>
-        <p id="m-date" style="font-size:12px; color:#888;"></p>
-        <select id="m-select"><option value="">Cargando UFs...</option></select>
-        <button class="btn" id="m-confirm" style="width:100%; background:var(--blue); margin-bottom:10px;">CONFIRMAR</button>
-        <button class="btn" onclick="closeM()" style="width:100%; background:none; color:#888;">CANCELAR</button>
+        <h3 id="m-title" style="color:var(--blue); margin:0;">Gestión de Fecha</h3>
+        <p id="m-date" style="font-size:14px; color:#888; margin-top:5px;"></p>
+        
+        <!-- VISTA: CREAR RESERVA -->
+        <div id="vista-crear">
+            <select id="m-select"><option value="">Cargando UFs...</option></select>
+            <button class="btn" id="m-confirm" style="width:100%; background:var(--blue); padding:15px;">
+                CONFIRMAR RESERVA
+            </button>
+        </div>
+
+        <!-- VISTA: DÍA OCUPADO (ELIMINAR) -->
+        <div id="vista-ocupado" class="hidden">
+            <div class="info-box">
+                <p style="color:var(--orange); font-weight: bold; margin:0 0 5px 0;">OCUPADO</p>
+                <p id="info-ocupado" style="margin:0; font-size: 18px; font-weight: bold;"></p>
+            </div>
+            <button class="btn" id="m-delete" style="width:100%; background:var(--red); padding:15px; margin-bottom:10px;">
+                ELIMINAR RESERVA
+            </button>
+        </div>
+
+        <button class="btn" onclick="closeM()" style="width:100%; background:none; color:#888; margin-top:10px;">VOLVER</button>
     </div>
 </div>
 
 <script type="module">
-    // Importación directa para evitar fallos de resolución
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const config = { 
         apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
@@ -77,63 +94,97 @@
     try {
         const app = initializeApp(config);
         const db = getFirestore(app);
-        let reservas = [];
+        const MASTER_KEY = "1131552679";
+        let listaReservas = [];
         let ufs = {};
 
-        // RENDER INMEDIATO DEL CALENDARIO
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        // INICIALIZAR CALENDARIO
+        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth',
             locale: 'es',
             height: 'auto',
-            dateClick: function(info) {
-                document.getElementById('m-date').innerText = info.dateStr;
-                document.getElementById('modal').style.display = 'flex';
-                window.selectedDate = info.dateStr;
-            }
+            dateClick: (info) => abrirGestor(info.date_str || info.dateStr)
         });
         calendar.render();
-        debug.innerText = "Calendario activo. Conectando DB...";
 
         // CARGAR UFs
-        const snap = await getDocs(collection(db, "departamentos"));
-        const sel = document.getElementById('m-select');
-        sel.innerHTML = '<option value="">Elegir Unidad...</option>';
-        snap.forEach(doc => {
-            const d = doc.data();
-            const n = d.UF || d.Unidad;
-            ufs[n] = d.TelefonoInquilino || "";
-            let opt = document.createElement('option');
-            opt.value = n; opt.innerText = "UF " + n;
-            sel.appendChild(opt);
-        });
+        const loadUFs = async () => {
+            const snap = await getDocs(collection(db, "departamentos"));
+            const sel = document.getElementById('m-select');
+            sel.innerHTML = '<option value="">Seleccionar UF...</option>';
+            snap.forEach(d => {
+                const data = d.data();
+                const n = data.UF || data.Unidad;
+                ufs[n] = data.TelefonoInquilino || "";
+                let opt = document.createElement('option');
+                opt.value = n; opt.innerText = "Unidad " + n;
+                sel.appendChild(opt);
+            });
+        };
+        loadUFs();
 
-        // ESCUCHAR RESERVAS
+        // ESCUCHAR RESERVAS TIEMPO REAL
         onSnapshot(collection(db, "reservas_salon"), (s) => {
-            reservas = s.docs.map(d => ({...d.data()}));
-            calendar.setOption('events', reservas.map(r => ({
-                title: 'Ocupado UF ' + r.uf,
+            listaReservas = s.docs.map(d => ({id: d.id, ...d.data()}));
+            calendar.setOption('events', listaReservas.map(r => ({
+                title: 'UF ' + r.uf,
                 start: r.fecha,
                 color: '#e11d48'
             })));
-            debug.innerText = "SISTEMA LISTO (OK)";
+            debug.innerText = "CONEXIÓN EXITOSA";
         });
 
-        // GUARDAR
+        function abrirGestor(fecha) {
+            window.selectedDate = fecha;
+            window.currentResId = null;
+            document.getElementById('m-date').innerText = "📅 " + fecha;
+            
+            const ocupado = listaReservas.find(r => r.fecha === fecha);
+            
+            if (ocupado) {
+                window.currentResId = ocupado.id;
+                document.getElementById('vista-crear').classList.add('hidden');
+                document.getElementById('vista-ocupado').classList.remove('hidden');
+                document.getElementById('info-ocupado').innerText = "Unidad " + ocupado.uf;
+            } else {
+                document.getElementById('vista-crear').classList.remove('hidden');
+                document.getElementById('vista-ocupado').classList.add('hidden');
+            }
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // ACCIÓN: GUARDAR
         document.getElementById('m-confirm').onclick = async () => {
-            const u = sel.value;
-            if(!u) return alert("Selecciona UF");
+            const val = document.getElementById('m-select').value;
+            if(!val) return alert("Selecciona una UF");
+
             await addDoc(collection(db, "reservas_salon"), {
-                fecha: window.selectedDate, uf: u, tel: ufs[u]
+                fecha: window.selectedDate,
+                uf: val,
+                tel: ufs[val],
+                timestamp: new Date()
             });
-            window.open(`https://wa.me/5491131552679?text=Reserva SUM: ${window.selectedDate} UF ${u}`);
+
+            const msj = `*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${val}`;
+            window.open(`https://wa.me/5491131552679?text=${msj}`);
             closeM();
         };
 
-    } catch (e) {
-        debug.innerText = "ERROR: " + e.message;
-        console.error(e);
-    }
+        // ACCIÓN: ELIMINAR CON CLAVE
+        document.getElementById('m-delete').onclick = async () => {
+            const pass = prompt("INTRODUZCA CLAVE PARA ELIMINAR:");
+            if (pass === MASTER_KEY) {
+                try {
+                    await deleteDoc(doc(db, "reservas_salon", window.currentResId));
+                    debug.innerText = "Reserva eliminada";
+                    closeM();
+                } catch (e) { alert("Error al borrar"); }
+            } else {
+                alert("Clave incorrecta");
+            }
+        };
+
+    } catch (e) { debug.innerText = "Error: " + e.message; }
 
     window.closeM = () => { document.getElementById('modal').style.display = 'none'; };
 </script>
