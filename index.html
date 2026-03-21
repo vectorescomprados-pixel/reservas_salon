@@ -2,155 +2,201 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Reserva SUM Interactivo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+    <title>SUM Pro - V5.0 Blindado</title>
     
-    <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --bg: #0b141a; --card: #111b21; --primary: #2563eb; --text: #e9edef; --border: #222d34; --success: #22c55e; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
+        :root { --bg: #0b141a; --card: #111b21; --primary: #2563eb; --danger: #e11d48; --text: #e9edef; --border: #222d34; --warning: #f59e0b; --success: #22c55e; --ghost: #374151; }
+        body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: contain; }
         
-        .header { text-align: center; padding: 15px; background: var(--card); border-bottom: 3px solid var(--primary); border-radius: 10px; margin-bottom: 20px; }
+        .wrap { width: 95%; max-width: 450px; margin: 0 auto; padding-bottom: 50px; }
+        .main-header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--primary); border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; position: sticky; top:0; z-index:100; }
         
-        /* Estilos del Calendario */
-        #calendar { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid var(--border); max-width: 600px; margin: 0 auto; }
-        .fc-header-toolbar { font-size: 0.8em; }
-        .fc-daygrid-day { cursor: pointer; }
-        .fc-daygrid-day:hover { background: rgba(37, 99, 235, 0.1); }
-
-        /* Modal */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 350px; border: 1px solid var(--border); }
-        .hidden { display: none; }
+        /* Estética Foto 2 aplicada al Calendario */
+        #calendar { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid var(--border); font-size: 0.9em; }
+        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid var(--border) !important; }
+        .fc-day-today { background: rgba(37, 99, 235, 0.15) !important; }
+        .fc-toolbar-title { font-size: 1.1em !important; color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .fc-button-primary { background: var(--ghost) !important; border: none !important; text-transform: uppercase; font-size: 0.8em !important; font-weight: bold !important; }
         
-        input, select { width: 100%; height: 45px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: #1a242b; color: #fff; padding: 0 10px; }
-        .btn { width: 100%; height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .primary { background: var(--primary); }
-        .danger { background: #e11d48; margin-top: 10px; }
+        /* Botones Estilo Foto 2 */
+        .btn { height: 45px; border-radius: 10px; border: none; font-weight: bold; font-size: 11px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; width: 100%; }
+        .primary { background: var(--primary); } .danger { background: var(--danger); } .warning { background: var(--warning); color: #000; } .ghost { background: var(--ghost); }
+        
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 380px; border: 1px solid var(--border); }
+        input, select { width: 100%; height: 45px; margin-bottom: 12px; border-radius: 10px; border: 1px solid var(--border); padding: 0 12px; background: #1a242b; color: #fff; }
+        
+        .occupied-mark { background: var(--danger) !important; color: white !important; border-radius: 4px; font-size: 0.7em; padding: 2px; text-align: center; }
+        #log-panel { background: #000; color: #40c4ff; font-family: monospace; font-size: 10px; padding: 8px; border-radius: 8px; margin-top: 10px; height: 50px; overflow-y: auto; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 style="margin:0; font-size:18px;">SUM - RESERVAS</h2>
-    <small style="color:var(--success)">Toca un día para reservar</small>
-</div>
+    <div class="wrap">
+        <div class="main-header">
+            <div style="font-size:10px; text-align:center; margin-bottom:10px; color:var(--success)">● EN LÍNEA - SEGURIDAD ACTIVA</div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="location.reload()" class="btn ghost">REFRESCAR</button>
+                <button id="btn-admin-view" class="btn ghost">ADMINISTRAR</button>
+            </div>
+            <div id="log-panel">Iniciando sistema...</div>
+        </div>
 
-<div id="calendar"></div>
-
-<!-- Modal de Reserva -->
-<div id="modal-reserva" class="modal hidden">
-    <div class="modal-content">
-        <h3 id="fecha-sel" style="color:var(--primary); margin-top:0"></h3>
-        <label>Seleccionar Unidad (UF):</label>
-        <select id="select-uf">
-            <option value="">Cargando UFs...</option>
-        </select>
-        <div id="info-uf" style="font-size: 12px; color: #8a96a3; margin-bottom: 10px;"></div>
-        
-        <button id="btn-confirmar" class="btn primary">
-            <i class="fab fa-whatsapp"></i> CONFIRMAR Y AVISAR
-        </button>
-        <button onclick="cerrarModal()" class="btn danger">CANCELAR</button>
+        <div id="calendar"></div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, getDocs, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = { 
-        apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
-        authDomain: "gestionuf-remoto.firebaseapp.com", 
-        projectId: "gestionuf-remoto", 
-        storageBucket: "gestionuf-remoto.firebasestorage.app", 
-        messagingSenderId: "724452752860", 
-        appId: "1:724452752860:web:4d25585addcdcbd146e319" 
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // --- CONFIGURACIÓN ---
-    const MI_WHATSAPP = "5491131552679"; // Tu número donde recibirás el aviso
-    let directorio = {};
-    let fechaSeleccionada = "";
-
-    // Cargar Directorio de UFs y Teléfonos
-    async function cargarUFs() {
-        const snap = await getDocs(collection(db, "departamentos"));
-        const select = document.getElementById("select-uf");
-        select.innerHTML = '<option value="">Elegir UF...</option>';
-        
-        snap.forEach(doc => {
-            const d = doc.data();
-            directorio[d.UF] = d.TelefonoInquilino || "Sin teléfono";
-            const opt = document.createElement("option");
-            opt.value = d.UF;
-            opt.innerText = `Unidad ${d.UF}`;
-            select.appendChild(opt);
-        });
-    }
-
-    // Inicializar Calendario
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'es',
-        headerToolbar: { left: 'prev,next', center: 'title', right: '' },
-        dateClick: function(info) {
-            fechaSeleccionada = info.dateStr;
-            document.getElementById("fecha-sel").innerText = info.dateStr;
-            document.getElementById("modal-reserva").classList.remove("hidden");
-        },
-        events: [] // Se cargarán desde Firebase
-    });
-    calendar.render();
-
-    // Escuchar Reservas en tiempo real
-    onSnapshot(collection(db, "reservas_salon"), (snap) => {
-        const evts = snap.docs.map(doc => ({
-            title: `UF ${doc.data().uf}`,
-            start: doc.data().fecha,
-            color: '#e11d48'
-        }));
-        calendar.setOption('events', evts);
-    });
-
-    // Confirmar Reserva
-    document.getElementById("btn-confirmar").onclick = async () => {
-        const uf = document.getElementById("select-uf").value;
-        if(!uf) return alert("Selecciona una UF");
-
-        const telInquilino = directorio[uf];
-        
-        try {
-            // 1. Guardar en Firebase
-            await addDoc(collection(db, "reservas_salon"), {
-                fecha: fechaSeleccionada,
-                uf: uf,
-                telefono: telInquilino,
-                creadoEl: new Date()
-            });
-
-            // 2. Disparar WhatsApp
-            const mensaje = `*Nueva Reserva SUM*%0A📅 Fecha: ${fechaSeleccionada}%0A🏢 Unidad: ${uf}%0A📱 Tel. Inquilino: ${telInquilino}`;
-            const url = `https://wa.me/${MI_WHATSAPP}?text=${mensaje}`;
+    <!-- MODAL RESERVA (ESTILO FOTO 2) -->
+    <div id="modal-reserva" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modal-title" style="color:var(--primary); margin-top:0">Nueva Reserva</h3>
+            <p id="fecha-texto" style="font-size: 14px; margin-bottom: 15px; color: var(--success)"></p>
             
-            window.open(url, '_blank');
-            cerrarModal();
-        } catch (e) { alert("Error al guardar"); }
-    };
+            <div id="form-crear">
+                <select id="select-uf">
+                    <option value="">Cargando Unidades...</option>
+                </select>
+                <button id="btn-confirmar" class="btn primary">CONFIRMAR Y AVISAR</button>
+            </div>
 
-    window.cerrarModal = () => document.getElementById("modal-reserva").classList.add("hidden");
-    
-    cargarUFs();
-</script>
+            <div id="form-cancelar" class="hidden">
+                <div style="background: #1a242b; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <p id="info-reserva-actual" style="margin:0; font-size: 13px;"></p>
+                </div>
+                <button id="btn-cancelar-reserva" class="btn danger">CANCELAR ESTA RESERVA</button>
+            </div>
+
+            <button onclick="cerrarModal()" class="btn ghost" style="margin-top:10px">VOLVER</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
+            authDomain: "gestionuf-remoto.firebaseapp.com", 
+            projectId: "gestionuf-remoto", 
+            storageBucket: "gestionuf-remoto.firebasestorage.app", 
+            messagingSenderId: "724452752860", 
+            appId: "1:724452752860:web:4d25585addcdcbd146e319" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- CONFIGURACIÓN DE ADMINISTRACIÓN ---
+        const TEL_ADMINISTRACION = "5491131552679"; 
+        const MASTER_CODE = "1131552679";[cite: 1]
+        
+        let directorio = {}, reservasActuales = [], fechaSel = "";
+
+        const writeLog = (m) => {
+            const lp = document.getElementById("log-panel");
+            lp.innerHTML += `<div>» ${m}</div>`; lp.scrollTop = lp.scrollHeight;
+        };
+
+        // Cargar UFs desde tu base original
+        async function cargarDirectorio() {
+            const snap = await getDocs(collection(db, "departamentos"));
+            const select = document.getElementById("select-uf");
+            select.innerHTML = '<option value="">Seleccione UF...</option>';
+            snap.forEach(d => {
+                const data = d.data();
+                directorio[data.UF] = data.TelefonoInquilino || "Sin Teléfono";
+                let opt = document.createElement("option"); opt.value = data.UF; opt.innerText = `UF ${data.UF}`;
+                select.appendChild(opt);
+            });
+            writeLog("Base de UFs vinculada.");
+        }
+
+        // Inicializar Calendario FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            firstDay: 1,
+            headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+            dateClick: (info) => manejarClickFecha(info.dateStr),
+            events: []
+        });
+        calendar.render();
+
+        // Escuchar Reservas (Nueva Colección)
+        onSnapshot(collection(db, "reservas_salon"), (snap) => {
+            reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const evts = reservasActuales.map(r => ({
+                title: `OCUPADO - UF ${r.uf}`,
+                start: r.fecha,
+                className: 'occupied-mark',
+                allDay: true,
+                extendedProps: { resId: r.id, uf: r.uf }
+            }));
+            calendar.setOption('events', evts);
+            writeLog("Cronograma sincronizado.");
+        });
+
+        function manejarClickFecha(fecha) {
+            fechaSel = fecha;
+            const reservaExistente = reservasActuales.find(r => r.fecha === fecha);
+            
+            document.getElementById("modal-reserva").classList.remove("hidden");
+            document.getElementById("fecha-texto").innerText = `Día: ${fecha}`;
+
+            if (reservaExistente) {
+                // Modo Cancelación
+                document.getElementById("modal-title").innerText = "Reserva Existente";
+                document.getElementById("form-crear").classList.add("hidden");
+                document.getElementById("form-cancelar").classList.remove("hidden");
+                document.getElementById("info-reserva-actual").innerText = `Ocupado por UF: ${reservaExistente.uf}`;
+                document.getElementById("btn-cancelar-reserva").onclick = () => cancelarReserva(reservaExistente.id);
+            } else {
+                // Modo Creación
+                document.getElementById("modal-title").innerText = "Nueva Reserva";
+                document.getElementById("form-crear").classList.remove("hidden");
+                document.getElementById("form-cancelar").classList.add("hidden");
+            }
+        }
+
+        document.getElementById("btn-confirmar").onclick = async () => {
+            const uf = document.getElementById("select-uf").value;
+            if (!uf) return alert("Seleccione una Unidad");
+
+            try {
+                const telInq = directorio[uf] || "No registrado";
+                await addDoc(collection(db, "reservas_salon"), {
+                    fecha: fechaSel,
+                    uf: uf,
+                    telInquilino: telInq,
+                    timestamp: new Date()
+                });
+
+                // Enviar WhatsApp a Administración
+                const msj = `*AVISO DE RESERVA SUM*%0A📅 Fecha: ${fechaSel}%0A🏢 UF: ${uf}%0A📱 Tel. Inquilino: ${telInq}`;
+                window.open(`https://wa.me/${TEL_ADMINISTRACION}?text=${msj}`, '_blank');
+                
+                cerrarModal();
+                writeLog(`Reserva UF ${uf} exitosa.`);
+            } catch (e) { alert("Error al guardar"); }
+        };
+
+        async function cancelarReserva(id) {
+            const p = prompt("Ingrese CLAVE MAESTRA para cancelar:");[cite: 1]
+            if (p !== MASTER_CODE) return alert("Código incorrecto");
+            
+            await deleteDoc(doc(db, "reservas_salon", id));
+            writeLog("Reserva cancelada.");
+            cerrarModal();
+        }
+
+        window.cerrarModal = () => document.getElementById("modal-reserva").classList.add("hidden");
+        cargarDirectorio();
+    </script>
 </body>
 </html>
