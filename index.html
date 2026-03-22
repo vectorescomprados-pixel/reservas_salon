@@ -3,17 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Buscador de Dpto</title>
+    <title>SUM PRO - Buscador Ordenado</title>
     
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
         :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --red: #e11d48; --orange: #f59e0b; --text: #e9edef; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
         .app { width: 95%; max-width: 450px; margin: 0 auto; padding: 15px; }
         
         .header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--blue); border-radius: 12px; margin-bottom: 20px; text-align: center; }
-        
         #calendar { background: var(--card); border-radius: 12px; padding: 10px; border: 1px solid #222d34; min-height: 480px; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
@@ -22,63 +21,62 @@
         .search-box { position: relative; margin: 15px 0; }
         input[type="text"] { width: 100%; height: 50px; background: #1a242b; border: 1px solid #333; border-radius: 10px; color: white; padding: 0 15px; box-sizing: border-box; font-size: 18px; font-weight: bold; text-transform: uppercase; }
         
-        .results-list { position: absolute; width: 100%; background: #1f2c34; border: 1px solid #444; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; }
-        .result-item { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; }
+        .results-list { position: absolute; width: 100%; background: #1f2c34; border: 1px solid #444; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .result-item { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .result-item:hover { background: var(--blue); }
-        .res-uf { color: var(--orange); font-weight: bold; margin-right: 10px; }
-        .res-name { font-size: 14px; color: #fff; }
+        .res-uf { color: var(--orange); font-weight: bold; background: rgba(245, 158, 11, 0.1); padding: 2px 6px; border-radius: 4px; }
+        .res-name { font-size: 14px; color: #fff; flex: 1; margin-left: 10px; text-align: right; }
 
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; color: white; }
         .btn-blue { background: var(--blue); }
         .btn-red { background: var(--red); }
         
         .hidden { display: none; }
-        #debug { font-size: 9px; color: #40c4ff; margin-top: 10px; text-align: center; }
-        .tag { background: #22c55e; color: black; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
+        #debug { font-size: 9px; color: #40c4ff; margin-top: 10px; text-align: center; font-family: monospace; }
+        .selection-box { background: rgba(37, 99, 235, 0.1); padding: 15px; border-radius: 10px; border: 1px solid var(--blue); margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <div class="app">
     <div class="header">
-        <div style="font-size: 10px; color: #22c55e; font-weight: bold; margin-bottom: 10px;">● PANEL ADMINISTRATIVO SUM</div>
+        <div style="font-size: 10px; color: #22c55e; font-weight: bold; margin-bottom: 10px;">● GESTIÓN SUM - ORDEN ASCENDENTE</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn" style="background:#374151; padding:10px" onclick="location.reload()">ACTUALIZAR</button>
+            <button class="btn" style="background:#374151; padding:10px" onclick="location.reload()">REINTENTAR</button>
             <button class="btn btn-red" style="padding:10px" onclick="window.close()">CERRAR</button>
         </div>
-        <div id="debug">Sincronizando...</div>
+        <div id="debug">Sincronizando base de datos...</div>
     </div>
     <div id="calendar"></div>
 </div>
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 style="margin:0; color:var(--blue)">Nueva Reserva</h3>
+        <h3 style="margin:0; color:var(--blue)">Agendar SUM</h3>
         <p id="m-date" style="font-size:13px; color:#888; margin: 5px 0 15px 0;"></p>
         
         <div id="ui-crear">
-            <label style="font-size:11px; color:var(--orange); font-weight: bold;">INGRESE DPTO (EJ: 24A):</label>
+            <label style="font-size:11px; color:var(--orange); font-weight: bold;">BUSCAR DPTO / UNIDAD:</label>
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="Escriba dpto..." autocomplete="off" maxlength="10">
+                <input type="text" id="search-input" placeholder="Ej: 24A..." autocomplete="off">
                 <div id="results" class="results-list"></div>
             </div>
             
             <div id="selection-card" class="hidden">
-                <div class="tag">COINCIDENCIA ENCONTRADA</div>
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid #444; margin-bottom: 15px;">
-                    <span id="label-uf" style="font-size: 18px; font-weight: bold; display: block; color: var(--blue);"></span>
-                    <span id="label-inquilino" style="font-size: 13px; color: #aaa;"></span>
+                <div class="selection-box">
+                    <span id="label-uf" style="font-size: 20px; font-weight: bold; color: var(--blue); display: block;"></span>
+                    <span id="label-inquilino" style="font-size: 13px; color: #e9edef;"></span>
                 </div>
-                <button class="btn btn-blue" id="btn-confirm">RESERVAR AHORA</button>
+                <button class="btn btn-blue" id="btn-confirm">CONFIRMAR RESERVA</button>
             </div>
         </div>
 
         <div id="ui-ocupado" class="hidden">
             <div style="background:#1a242b; padding:15px; border-radius:10px; border-left: 4px solid var(--red);">
-                <p style="color:var(--red); font-weight:bold; margin:0">DÍA OCUPADO</p>
+                <p style="color:var(--red); font-weight:bold; margin:0">DÍA NO DISPONIBLE</p>
                 <p id="info-reserva" style="font-size:18px; font-weight:bold; margin:5px 0 0 0;"></p>
             </div>
-            <button class="btn btn-red" id="btn-delete" style="margin-top:20px;">BORRAR RESERVA</button>
+            <button class="btn btn-red" id="btn-delete" style="margin-top:20px;">ELIMINAR ESTA RESERVA</button>
         </div>
 
         <button class="btn" style="background:transparent; color:#888" onclick="closeM()">VOLVER</button>
@@ -111,11 +109,11 @@
         const snap = await getDocs(collection(db, "departamentos"));
         dataUFs = snap.docs.map(d => ({
             id: d.id,
-            uf: d.data().UF || d.data().Unidad || "N/A",
+            uf: parseInt(d.data().UF || d.data().Unidad) || 0,
             inquilino: d.data().Inquilino || d.data().NombreInquilino || "",
             tel: d.data().TelefonoInquilino || ""
         }));
-        document.getElementById('debug').innerText = "BASE LISTA - BUSCADOR ACTIVADO";
+        document.getElementById('debug').innerText = "LISTO: " + dataUFs.length + " UNIDADES CARGADAS";
     }
 
     const input = document.getElementById('search-input');
@@ -124,26 +122,31 @@
     input.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
         results.innerHTML = '';
-        
-        // REGLA: Buscamos coincidencias exactas del dpto (máximo 3-4 caracteres sugeridos)
         if(val.length < 1) { results.style.display = 'none'; return; }
         
-        // Filtramos: que el valor escrito esté dentro del campo inquilino (ej: "24A")
-        const filtered = dataUFs.filter(item => 
+        // 1. Filtrar coincidencias
+        let filtered = dataUFs.filter(item => 
             item.inquilino.toLowerCase().includes(val) || 
-            item.uf.toString().toLowerCase() === val
+            item.uf.toString().includes(val)
         );
 
+        // 2. ORDENAR ASCENDENTE POR UF (De menor a mayor)
+        filtered.sort((a, b) => a.uf - b.uf);
+
+        // 3. Mostrar resultados
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'result-item';
-            div.innerHTML = `<span class="res-uf">UF ${item.uf}</span> <span class="res-name">${item.inquilino}</span>`;
+            div.innerHTML = `
+                <span class="res-uf">UF ${item.uf}</span>
+                <span class="res-name">${item.inquilino}</span>
+            `;
             div.onclick = () => {
                 selUF = item;
-                input.value = val.toUpperCase();
+                input.value = `UF ${item.uf} - ${item.inquilino}`;
                 results.style.display = 'none';
                 document.getElementById('selection-card').classList.remove('hidden');
-                document.getElementById('label-uf').innerText = `UNIDAD ${item.uf}`;
+                document.getElementById('label-uf').innerText = `UNIDAD SELECCIONADA: ${item.uf}`;
                 document.getElementById('label-inquilino').innerText = item.inquilino;
             };
             results.appendChild(div);
@@ -151,12 +154,14 @@
         results.style.display = filtered.length > 0 ? 'block' : 'none';
     });
 
+    // CALENDARIO
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth', locale: 'es', height: 'auto',
         dateClick: (info) => abrir(info.dateStr)
     });
     calendar.render();
 
+    // ESCUCHAR RESERVAS
     onSnapshot(collection(db, "reservas_salon"), (s) => {
         reservas = s.docs.map(d => ({id: d.id, ...d.data()}));
         calendar.setOption('events', reservas.map(r => ({
@@ -166,7 +171,7 @@
 
     function abrir(fecha) {
         window.selectedDate = fecha;
-        document.getElementById('m-date').innerText = "Turno: " + fecha;
+        document.getElementById('m-date').innerText = "Reserva para el " + fecha;
         input.value = '';
         document.getElementById('selection-card').classList.add('hidden');
         results.style.display = 'none';
@@ -177,7 +182,7 @@
             window.currentResInfo = res;
             document.getElementById('ui-crear').classList.add('hidden');
             document.getElementById('ui-ocupado').classList.remove('hidden');
-            document.getElementById('info-reserva').innerText = `UF ${res.uf} (${res.inquilino || 'S/D'})`;
+            document.getElementById('info-reserva').innerText = `UF ${res.uf} (${res.inquilino})`;
         } else {
             document.getElementById('ui-crear').classList.remove('hidden');
             document.getElementById('ui-ocupado').classList.add('hidden');
@@ -186,22 +191,23 @@
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
+        if(!selUF) return;
         await addDoc(collection(db, "reservas_salon"), {
             fecha: window.selectedDate,
             uf: selUF.uf,
             inquilino: selUF.inquilino,
             tel: selUF.tel,
-            creado: new Date()
+            ts: new Date()
         });
-        window.open(`https://wa.me/${ADMIN_TEL}?text=*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0ADpto/Ref: ${selUF.inquilino}`);
+        window.open(`https://wa.me/${ADMIN_TEL}?text=*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0ADpto: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
-        if(prompt("CLAVE MAESTRA:") === MASTER_KEY) {
+        if(prompt("CLAVE DE ADMINISTRADOR:") === MASTER_KEY) {
             const r = window.currentResInfo;
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/${ADMIN_TEL}?text=*CANCELACIÓN SUM*%0AFecha: ${r.fecha}%0AUF: ${r.uf}`);
+            window.open(`https://wa.me/${ADMIN_TEL}?text=*CANCELACIÓN SUM*%0AFecha: ${r.fecha}%0AUF: ${r.uf}%0ADpto: ${r.inquilino}`);
             closeM();
         }
     };
