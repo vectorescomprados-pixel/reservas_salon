@@ -13,33 +13,25 @@
     <style>
         * { box-sizing: border-box; }
         :root { --bg: #0b141a; --card: #1c272e; --blue: #1d6ed7; --red: #e91e63; --green: #25d366; --text: #e9edef; --border: #2a3942; }
-        
         body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; }
-        
         .app-bar { background: #111b21; padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; }
         .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; text-transform: uppercase; }
-
         .container { width: 100%; padding: 10px; }
         #calendar { background: #111b21; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
-        
         .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; }
         .fc-col-header-cell-cushion { color: #00d2ff !important; font-weight: 900 !important; text-transform: uppercase; }
-
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 25px; border-radius: 28px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #32444e; }
-        
         .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; font-size: 16px; margin: 10px 0; outline: none; text-align: center; }
-        
         .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 12px; border-radius: 12px; border: 1px dashed var(--blue); cursor: pointer; margin: 10px 0; font-size: 14px; font-weight: bold; }
-
         .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; font-size: 13px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-red { background: var(--red); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-ghost { background: transparent; color: #8696a0; border: 1px solid #32444e; }
-
         .results-list { background: #111b21; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; border: 1px solid var(--border); }
         .result-item { padding: 15px; border-bottom: 1px solid #2a3942; font-size: 15px; text-align: left; color: white; }
+        #loading-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; z-index: 10; }
     </style>
 </head>
 <body>
@@ -54,7 +46,9 @@
 </div>
 
 <div id="modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="position: relative;">
+        <div id="loading-overlay">Subiendo Comprobante...</div>
+
         <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
@@ -76,11 +70,10 @@
             <input type="file" id="file-upload" accept="image/*" style="display:none">
             
             <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Reserva</button>
-            
-            <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
+            <button class="btn btn-green" id="btn-update-pago" style="display:none">Actualizar con Foto</button>
         </div>
 
-        <button class="btn btn-ghost" onclick="closeM()">Volver</button>
+        <button class="btn btn-ghost" id="btn-volver" onclick="closeM()">Volver</button>
     </div>
 </div>
 
@@ -95,19 +88,21 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const config = { 
         apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
         authDomain: "gestionuf-remoto.firebaseapp.com", 
         projectId: "gestionuf-remoto", 
-        storageBucket: "gestionuf-remoto.firebasestorage.app", 
+        storageBucket: "gestionuf-remoto.appspot.com", 
         messagingSenderId: "724452752860", 
         appId: "1:724452752860:web:4d25585addcdcbd146e319" 
     };
 
     const app = initializeApp(config);
     const db = getFirestore(app);
+    const storage = getStorage(app);
     const MASTER_KEY = "1131552679"; 
     const formatFechaLegible = (f) => f ? f.split('-').reverse().join('-') : "";
 
@@ -126,7 +121,17 @@
     const results = document.getElementById('results');
     const fileInput = document.getElementById('file-upload');
     const fileStatus = document.getElementById('file-status');
-    
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Función para subir a Firebase Storage
+    async function subirFoto(file) {
+        if(!file) return null;
+        const nombreArchivo = `comprobantes/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, nombreArchivo);
+        const snapshot = await uploadBytes(storageRef, file);
+        return await getDownloadURL(snapshot.ref);
+    }
+
     fileInput.addEventListener('change', (e) => {
         if(e.target.files.length > 0) {
             fileStatus.innerText = "✅ COMPROBANTE LISTO";
@@ -139,12 +144,7 @@
         const val = e.target.value.toLowerCase().trim();
         results.innerHTML = '';
         if(val.length < 1) { results.style.display = 'none'; return; }
-        
-        let filtered = dataUFs.filter(item => 
-            item.inquilino.toLowerCase().includes(val) || 
-            item.uf.toString().includes(val)
-        ).sort((a,b) => a.uf - b.uf);
-
+        let filtered = dataUFs.filter(item => item.inquilino.toLowerCase().includes(val) || item.uf.toString().includes(val)).sort((a,b) => a.uf - b.uf);
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'result-item';
@@ -164,15 +164,10 @@
     });
 
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'dayGridMonth', 
-        locale: 'es', 
-        height: 'auto',
+        initialView: 'dayGridMonth', locale: 'es', height: 'auto',
         headerToolbar: { left: 'prev', center: 'title', right: 'next' },
         dateClick: (info) => abrir(info.dateStr),
-        // CORRECCIÓN: Permite hacer clic directamente en la etiqueta roja
-        eventClick: (info) => {
-            abrir(info.event.startStr);
-        }
+        eventClick: (info) => abrir(info.event.startStr)
     });
     calendar.render();
 
@@ -184,13 +179,9 @@
     function abrir(fecha) {
         window.selectedDate = fecha;
         document.getElementById('m-date').innerText = formatFechaLegible(fecha);
-        input.value = '';
-        fileInput.value = '';
+        input.value = ''; fileInput.value = '';
         fileStatus.innerText = "📷 SUBIR COMPROBANTE";
-        fileStatus.style.color = "#00d2ff";
-        fileStatus.style.borderColor = "var(--blue)";
-        
-        // Reset de botones
+        fileStatus.style.color = "#00d2ff"; fileStatus.style.borderColor = "var(--blue)";
         document.getElementById('selection-card').style.display = 'none';
         document.getElementById('btn-confirm').style.display = 'none';
         document.getElementById('btn-update-pago').style.display = 'none';
@@ -199,14 +190,10 @@
         if(res) {
             window.currentResId = res.id;
             window.currentResInfo = res;
-            // Para que el botón de actualizar sepa quién es:
             selUF = { uf: res.uf, inquilino: res.inquilino, tel: res.tel };
-
             document.getElementById('ui-crear').style.display = 'none';
             document.getElementById('ui-ocupado').style.display = 'block';
             document.getElementById('info-reserva').innerText = `RESERVADO: UF ${res.uf} - ${res.inquilino}`;
-            
-            // CORRECCIÓN: Mostrar botón de pago incluso si ya está ocupado
             document.getElementById('selection-card').style.display = 'block';
             document.getElementById('label-uf').innerText = `UF ${res.uf} | ${res.inquilino}`;
             document.getElementById('btn-update-pago').style.display = 'block';
@@ -218,54 +205,67 @@
         document.getElementById('modal').style.display = 'flex';
     }
 
-    // Confirmar Reserva Nueva
+    // CONFIRMAR NUEVA RESERVA
     document.getElementById('btn-confirm').onclick = async () => {
         if(!selUF) return;
+        loadingOverlay.style.display = "flex";
         try {
+            let fotoUrl = null;
+            if(fileInput.files) {
+                fotoUrl = await subirFoto(fileInput.files);
+            }
+
             await addDoc(collection(db, "reservas_salon"), { 
                 fecha: window.selectedDate, 
                 uf: selUF.uf, 
                 inquilino: selUF.inquilino, 
                 tel: selUF.tel,
-                pago: fileInput.files.length > 0 ? "Adjunto" : "Pendiente"
+                pago: fotoUrl ? "Pagado" : "Pendiente",
+                comprobanteUrl: fotoUrl || ""
             });
 
             let mensaje = `*RESERVA SUM PRO*%0A--------------------------%0A*Fecha:* ${formatFechaLegible(window.selectedDate)}%0A*UF:* ${selUF.uf}%0A*Inquilino:* ${selUF.inquilino}`;
-            if(fileInput.files.length > 0) mensaje += `%0A%0A✅ *Comprobante cargado en sistema.*`;
-            else mensaje += `%0A%0A⚠️ *Sin comprobante adjunto.*`;
+            if(fotoUrl) mensaje += `%0A%0A✅ *Comprobante:* ${fotoUrl}`;
+            else mensaje += `%0A%0A⚠️ *Pendiente de pago.*`;
 
             window.open(`https://wa.me/549${MASTER_KEY}?text=${mensaje}`);
             closeM();
-        } catch (e) { alert("Error al guardar: " + e.message); }
+        } catch (e) { alert("Error: " + e.message); }
+        loadingOverlay.style.display = "none";
     };
 
-    // Solo enviar comprobante de reserva existente
-    document.getElementById('btn-update-pago').onclick = () => {
-        let mensaje = `*PAGO SUM PRO*%0A--------------------------%0A*Fecha:* ${formatFechaLegible(window.selectedDate)}%0A*UF:* ${selUF.uf}%0A*Inquilino:* ${selUF.inquilino}%0A%0A✅ Envío comprobante de pago.`;
-        window.open(`https://wa.me/549${MASTER_KEY}?text=${mensaje}`);
-        closeM();
+    // ACTUALIZAR PAGO EXISTENTE
+    document.getElementById('btn-update-pago').onclick = async () => {
+        if(!fileInput.files) { alert("Selecciona una foto primero"); return; }
+        loadingOverlay.style.display = "flex";
+        try {
+            const fotoUrl = await subirFoto(fileInput.files);
+            await updateDoc(doc(db, "reservas_salon", window.currentResId), {
+                pago: "Pagado",
+                comprobanteUrl: fotoUrl
+            });
+
+            let mensaje = `*PAGO SUM PRO*%0A--------------------------%0A*Fecha:* ${formatFechaLegible(window.selectedDate)}%0A*UF:* ${selUF.uf}%0A%0A✅ *Comprobante:* ${fotoUrl}`;
+            window.open(`https://wa.me/549${MASTER_KEY}?text=${mensaje}`);
+            closeM();
+        } catch (e) { alert("Error: " + e.message); }
+        loadingOverlay.style.display = "none";
     };
 
     window.abrirSeguridad = () => {
         document.getElementById('admin-pass').value = '';
         document.getElementById('modal-seguridad').style.display = 'flex';
     };
-
     window.cerrarSeguridad = () => document.getElementById('modal-seguridad').style.display = 'none';
-
     document.getElementById('btn-autorizar').onclick = async () => {
         if(document.getElementById('admin-pass').value === MASTER_KEY) {
             const r = window.currentResInfo;
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
             window.open(`https://wa.me/549${MASTER_KEY}?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
-            cerrarSeguridad();
-            closeM();
-        } else {
-            alert("Clave incorrecta");
-        }
+            cerrarSeguridad(); closeM();
+        } else { alert("Clave incorrecta"); }
     };
-
-    window.closeM = () => document.getElementById('modal').style.display = 'none';
+    window.closeM = () => { document.getElementById('modal').style.display = 'none'; loadingOverlay.style.display = "none"; }
     init();
 </script>
 </body>
