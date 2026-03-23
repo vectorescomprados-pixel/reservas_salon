@@ -11,121 +11,62 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
-        * { box-sizing: border-box; } /* Evita que los bordes agranden los cuadros */
-
+        * { box-sizing: border-box; }
         :root { 
-            --bg: #0b141a; 
-            --card: #111b21; 
-            --blue: #2563eb; 
-            --red: #e11d48; 
-            --orange: #f59e0b; 
-            --text: #e9edef;
-            --border: #222d34;
+            --bg: #0b141a; --card: #111b21; --blue: #2563eb; 
+            --red: #e11d48; --orange: #f59e0b; --text: #e9edef; --border: #222d34;
         }
 
         body { 
-            margin: 0; 
-            background: var(--bg); 
-            font-family: 'Segoe UI', sans-serif; 
-            color: var(--text);
-            overflow-x: hidden; /* Prohibido el scroll lateral */
-            -webkit-tap-highlight-color: transparent;
+            margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; 
+            color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        /* HEADER AJUSTADO */
         .app-bar { 
-            background: var(--card); 
-            padding: 20px 10px; 
-            border-bottom: 3px solid var(--blue);
-            text-align: center;
-            width: 100%;
+            background: var(--card); padding: 20px 10px; border-bottom: 3px solid var(--blue);
+            text-align: center; width: 100%;
         }
-        .app-bar h1 { 
-            margin: 5px 0 0 0; 
-            color: #fff; 
-            font-size: 20px; /* Tamaño optimizado para no romperse en pantallas chicas */
-            font-weight: 900; 
-            text-transform: uppercase;
-        }
+        .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 20px; font-weight: 900; text-transform: uppercase; }
 
-        /* CONTENEDOR FLEXIBLE */
-        .container { 
-            width: 100%; 
-            padding: 8px; 
-            max-width: 100vw; 
-        }
+        .container { width: 100%; padding: 8px; }
 
-        /* CALENDARIO AUTO-AJUSTABLE */
-        #calendar { 
-            background: var(--card); 
-            border-radius: 12px; 
-            border: 1px solid var(--border);
-            width: 100%;
-            max-width: 100%;
-        }
-
-        /* Ajuste de celdas para que no se estiren */
-        .fc-daygrid-day-frame { overflow: hidden; }
-        .fc-daygrid-day { min-height: 90px !important; }
+        #calendar { background: var(--card); border-radius: 12px; border: 1px solid var(--border); width: 100%; }
 
         /* NOMBRES DENTRO DEL CALENDARIO */
         .fc-event {
             background: linear-gradient(145deg, #1e2a33, #111b21) !important;
-            border: 1.5px solid var(--blue) !important;
-            border-radius: 4px !important;
-            margin: 1px !important;
-            padding: 2px !important;
-            display: block;
+            border: 1.5px solid var(--blue) !important; border-radius: 4px !important;
+            margin: 1px !important; padding: 2px !important;
         }
         .fc-event-title { 
-            font-size: 11px !important; /* Ajustado para que entre en el cuadrito */
-            font-weight: 800 !important;
-            white-space: normal !important; /* El nombre baja de renglón si es largo */
-            text-align: center;
-            word-wrap: break-word;
+            font-size: 11px !important; font-weight: 800 !important;
+            white-space: normal !important; text-align: center;
         }
 
-        /* MODAL RESPONSIVO */
-        .modal { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
-            display: none; align-items: center; justify-content: center; z-index: 1000; 
-        }
+        /* MODAL */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { 
-            background: var(--card); 
-            width: 92%; /* Ajuste al ancho del cel */
-            max-width: 380px; 
-            padding: 20px; 
-            border-radius: 20px; 
-            border: 1px solid var(--border);
+            background: var(--card); width: 92%; max-width: 380px; 
+            padding: 20px; border-radius: 20px; border: 1px solid var(--border);
         }
         
         input[type="text"] { 
-            width: 100%; height: 55px; background: #070d11; border: 1px solid #2a3942; border-radius: 10px; 
-            color: white; padding: 0 15px; font-size: 16px; margin-top: 10px;
+            width: 100%; height: 55px; background: #070d11; border: 1px solid #2a3942; 
+            border-radius: 10px; color: white; padding: 0 15px; font-size: 16px; margin-top: 10px;
         }
 
-        .btn { 
-            width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; 
-            text-transform: uppercase; margin-top: 10px; font-size: 13px;
-        }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 10px; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-red { background: var(--red); color: white; }
 
         .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 8px; max-height: 150px; overflow-y: auto; }
         .result-item { padding: 15px; border-bottom: 1px solid #1c272e; font-size: 14px; }
-        
-        /* Ajustes para pantallas muy pequeñas (iPhone SE/5) */
-        @media (max-width: 340px) {
-            .app-bar h1 { font-size: 16px; }
-            .fc-col-header-cell-cushion { font-size: 10px; }
-            .fc-event-title { font-size: 9px !important; }
-        }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● TERMINAL MÓVIL OPTIMIZADA</div>
+    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● TERMINAL MÓVIL</div>
     <h1>SALÓN DE USOS MÚLTIPLES</h1>
 </div>
 
@@ -135,13 +76,12 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="m-title" style="margin:0; color:var(--blue); font-size: 14px;">GESTIÓN DE FECHA</h3>
-        <p id="m-date" style="color:#556671; font-weight: bold; font-size: 18px; margin: 5px 0 15px 0;"></p>
+        <h3 style="margin:0; color:var(--blue); font-size: 12px; letter-spacing: 1px;">FECHA SELECCIONADA</h3>
+        <p id="m-date" style="color:#fff; font-weight: 900; font-size: 22px; margin: 5px 0 15px 0;"></p>
 
         <div id="ui-crear">
             <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
-            
             <div id="selection-card" style="display:none; margin-top: 15px; padding: 15px; background: rgba(37,99,235,0.1); border-radius: 12px; border: 1px solid var(--blue);">
                 <span id="label-uf" style="font-size: 18px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
             </div>
@@ -180,6 +120,12 @@
     let reservas = [];
     let selUF = null;
 
+    // Función para formatear fecha de YYYY-MM-DD a DD-MM-YYYY
+    const formatFechaLegible = (fechaStr) => {
+        const [anio, mes, dia] = fechaStr.split('-');
+        return `${dia}-${mes}-${anio}`;
+    };
+
     async function init() {
         const snap = await getDocs(collection(db, "departamentos"));
         dataUFs = snap.docs.map(d => ({
@@ -196,11 +142,7 @@
         const val = e.target.value.toLowerCase().trim();
         results.innerHTML = '';
         if(val.length < 1) { results.style.display = 'none'; return; }
-        
-        let filtered = dataUFs.filter(item => 
-            item.inquilino.toLowerCase().includes(val) || item.uf.toString().includes(val)
-        ).sort((a,b) => a.uf - b.uf);
-
+        let filtered = dataUFs.filter(item => item.inquilino.toLowerCase().includes(val) || item.uf.toString().includes(val)).sort((a,b) => a.uf - b.uf);
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'result-item';
@@ -219,26 +161,20 @@
     });
 
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'dayGridMonth',
-        locale: 'es',
+        initialView: 'dayGridMonth', locale: 'es', height: 'auto',
         headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-        height: 'auto',
         dateClick: (info) => abrir(info.dateStr)
     });
     calendar.render();
 
     onSnapshot(collection(db, "reservas_salon"), (s) => {
         reservas = s.docs.map(d => ({id: d.id, ...d.data()}));
-        calendar.setOption('events', reservas.map(r => ({
-            title: r.inquilino,
-            start: r.fecha,
-            display: 'block'
-        })));
+        calendar.setOption('events', reservas.map(r => ({ title: r.inquilino, start: r.fecha, display: 'block' })));
     });
 
     function abrir(fecha) {
-        window.selectedDate = fecha;
-        document.getElementById('m-date').innerText = fecha.split('-').reverse().join(' / ');
+        window.selectedDate = fecha; // Guardamos el formato ISO para la base de datos
+        document.getElementById('m-date').innerText = formatFechaLegible(fecha); // Mostramos el formato humano
         input.value = '';
         document.getElementById('selection-card').style.display = 'none';
         document.getElementById('btn-confirm').style.display = 'none';
@@ -261,15 +197,17 @@
         await addDoc(collection(db, "reservas_salon"), {
             fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel
         });
-        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
+        const fechaMsg = formatFechaLegible(window.selectedDate);
+        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${fechaMsg}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
         if(prompt("PASSWORD:") === MASTER_KEY) {
             const r = window.currentResInfo;
+            const fechaMsg = formatFechaLegible(r.fecha);
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${r.fecha}%0AUF: ${r.uf}`);
+            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${fechaMsg}%0AUF: ${r.uf}`);
             closeM();
         }
     };
