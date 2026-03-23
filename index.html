@@ -3,11 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SUM PRO">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5585/5585856.png">
+
+    <link rel="manifest" id="manifest-placeholder">
+
     <title>SUM PRO</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNVTSBQUk8iLAogICJzaG9ydF9uYW1lIjogIlNVTSBQUk8iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMTQxYSIsCiAgInRoZW1lX2NvbG9yIjogIzBiMTQxYSIKfQ==">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
@@ -22,51 +27,57 @@
             color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;
         }
 
+        /* TÍTULO GIGANTE Y ESTILO APP */
         .app-bar { 
-            background: var(--card); padding: 20px 10px; border-bottom: 3px solid var(--blue);
-            text-align: center; width: 100%;
+            background: var(--card); padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue);
+            text-align: center; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         }
-        .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 20px; font-weight: 900; text-transform: uppercase; }
+        .app-bar h1 { 
+            margin: 5px 0 0 0; color: #fff; font-size: 24px; font-weight: 900; 
+            text-transform: uppercase; letter-spacing: -1px;
+        }
 
-        .container { width: 100%; padding: 8px; }
+        .container { width: 100%; padding: 10px; }
+        #calendar { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
 
-        #calendar { background: var(--card); border-radius: 12px; border: 1px solid var(--border); width: 100%; }
-
-        /* NOMBRES DENTRO DEL CALENDARIO */
+        /* CALENDARIO Y NOMBRES */
+        .fc-col-header-cell { background: #070d11 !important; border: 1px solid #1c272e !important; }
+        .fc-col-header-cell-cushion { color: var(--blue) !important; font-weight: 800; font-size: 11px; }
         .fc-event {
             background: linear-gradient(145deg, #1e2a33, #111b21) !important;
-            border: 1.5px solid var(--blue) !important; border-radius: 4px !important;
-            margin: 1px !important; padding: 2px !important;
+            border: 2px solid var(--blue) !important; border-radius: 6px !important;
+            margin: 2px !important; padding: 4px 2px !important;
         }
         .fc-event-title { 
-            font-size: 11px !important; font-weight: 800 !important;
-            white-space: normal !important; text-align: center;
+            font-size: 12px !important; font-weight: 900 !important; color: #fff !important;
+            white-space: normal !important; text-align: center; line-height: 1.1;
         }
 
         /* MODAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { 
             background: var(--card); width: 92%; max-width: 380px; 
-            padding: 20px; border-radius: 20px; border: 1px solid var(--border);
+            padding: 25px; border-radius: 25px; border: 1px solid var(--border);
+            box-shadow: 0 0 50px #000;
         }
         
         input[type="text"] { 
-            width: 100%; height: 55px; background: #070d11; border: 1px solid #2a3942; 
-            border-radius: 10px; color: white; padding: 0 15px; font-size: 16px; margin-top: 10px;
+            width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; 
+            border-radius: 12px; color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px;
         }
 
-        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 10px; }
-        .btn-blue { background: var(--blue); color: white; }
+        .btn { width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 12px; }
+        .btn-blue { background: var(--blue); color: white; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); }
         .btn-red { background: var(--red); color: white; }
 
-        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 8px; max-height: 150px; overflow-y: auto; }
-        .result-item { padding: 15px; border-bottom: 1px solid #1c272e; font-size: 14px; }
+        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 10px; max-height: 180px; overflow-y: auto; margin-top: 5px; }
+        .result-item { padding: 18px; border-bottom: 1px solid #1c272e; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● TERMINAL MÓVIL</div>
+    <div style="color: #22c55e; font-size: 10px; font-weight: bold; letter-spacing: 2px;">● MODO ADMINISTRADOR</div>
     <h1>SALÓN DE USOS MÚLTIPLES</h1>
 </div>
 
@@ -77,25 +88,25 @@
 <div id="modal" class="modal">
     <div class="modal-content">
         <h3 style="margin:0; color:var(--blue); font-size: 12px; letter-spacing: 1px;">FECHA SELECCIONADA</h3>
-        <p id="m-date" style="color:#fff; font-weight: 900; font-size: 22px; margin: 5px 0 15px 0;"></p>
+        <p id="m-date" style="color:#fff; font-weight: 900; font-size: 24px; margin: 5px 0 20px 0;"></p>
 
         <div id="ui-crear">
             <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
-            <div id="selection-card" style="display:none; margin-top: 15px; padding: 15px; background: rgba(37,99,235,0.1); border-radius: 12px; border: 1px solid var(--blue);">
-                <span id="label-uf" style="font-size: 18px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
+            <div id="selection-card" style="display:none; margin-top: 20px; padding: 20px; background: rgba(37,99,235,0.15); border-radius: 15px; border: 2px solid var(--blue);">
+                <span id="label-uf" style="font-size: 20px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
             </div>
-            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR AHORA</button>
+            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR Y NOTIFICAR</button>
         </div>
 
         <div id="ui-ocupado" style="display:none">
-            <div style="padding:15px; background: rgba(225,29,72,0.1); border-radius:12px; border: 1px solid var(--red); text-align: center;">
-                <span id="info-reserva" style="font-size:18px; font-weight: 900; color: #fff;"></span>
+            <div style="padding:20px; background: rgba(225,29,72,0.15); border-radius:15px; border: 2px solid var(--red); text-align: center;">
+                <span id="info-reserva" style="font-size:20px; font-weight: 900; color: #fff;"></span>
             </div>
-            <button class="btn btn-red" id="btn-delete">ELIMINAR REGISTRO</button>
+            <button class="btn btn-red" id="btn-delete">BORRAR ESTA RESERVA</button>
         </div>
 
-        <button class="btn" style="background:transparent; color:#556671" onclick="closeM()">CANCELAR</button>
+        <button class="btn" style="background:transparent; color:#556671" onclick="closeM()">VOLVER ATRÁS</button>
     </div>
 </div>
 
@@ -120,11 +131,39 @@
     let reservas = [];
     let selUF = null;
 
-    // Función para formatear fecha de YYYY-MM-DD a DD-MM-YYYY
     const formatFechaLegible = (fechaStr) => {
         const [anio, mes, dia] = fechaStr.split('-');
         return `${dia}-${mes}-${anio}`;
     };
+
+    // --- LÓGICA DE INSTALACIÓN APP (MANIFEST INLINE) ---
+    const myManifest = {
+        "name": "SUM PRO",
+        "short_name": "SUM PRO",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#0b141a",
+        "theme_color": "#0b141a",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/5585/5585856.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    };
+    const stringManifest = JSON.stringify(myManifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#manifest-placeholder').setAttribute('href', manifestURL);
+
+    // --- SERVICE WORKER INLINE ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGUyKSB7IGUyLnJlc3BvbmRXaXRoKGZldGNoKGUyLnJlcXVlc3QpKTsgfSk7').catch(() => {});
+        });
+    }
 
     async function init() {
         const snap = await getDocs(collection(db, "departamentos"));
@@ -173,12 +212,11 @@
     });
 
     function abrir(fecha) {
-        window.selectedDate = fecha; // Guardamos el formato ISO para la base de datos
-        document.getElementById('m-date').innerText = formatFechaLegible(fecha); // Mostramos el formato humano
+        window.selectedDate = fecha;
+        document.getElementById('m-date').innerText = formatFechaLegible(fecha);
         input.value = '';
         document.getElementById('selection-card').style.display = 'none';
         document.getElementById('btn-confirm').style.display = 'none';
-        
         const res = reservas.find(r => r.fecha === fecha);
         if(res) {
             window.currentResId = res.id;
@@ -194,20 +232,16 @@
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
-        await addDoc(collection(db, "reservas_salon"), {
-            fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel
-        });
-        const fechaMsg = formatFechaLegible(window.selectedDate);
-        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${fechaMsg}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
+        await addDoc(collection(db, "reservas_salon"), { fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel });
+        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
         if(prompt("PASSWORD:") === MASTER_KEY) {
             const r = window.currentResInfo;
-            const fechaMsg = formatFechaLegible(r.fecha);
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${fechaMsg}%0AUF: ${r.uf}`);
+            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
             closeM();
         }
     };
