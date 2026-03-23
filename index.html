@@ -8,10 +8,11 @@
     <title>SUM PRO</title>
     
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNVTSBQUk8iLAogICJzaG9ydF9uYW1lIjogIlNVTSBQUk8iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMTQxYSIsCiAgInRoZW1lX2NvbG9yIjogIzBiMTQxYSIKfQ==">
-
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
+        * { box-sizing: border-box; } /* Evita que los bordes agranden los cuadros */
+
         :root { 
             --bg: #0b141a; 
             --card: #111b21; 
@@ -27,96 +28,104 @@
             background: var(--bg); 
             font-family: 'Segoe UI', sans-serif; 
             color: var(--text);
+            overflow-x: hidden; /* Prohibido el scroll lateral */
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* TÍTULO AGRANDADO ESTILO APP PROFESIONAL */
+        /* HEADER AJUSTADO */
         .app-bar { 
             background: var(--card); 
-            padding: 25px 15px 15px 15px; 
+            padding: 20px 10px; 
             border-bottom: 3px solid var(--blue);
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 100%;
         }
         .app-bar h1 { 
-            margin: 0; 
+            margin: 5px 0 0 0; 
             color: #fff; 
-            font-size: 24px; /* Título más grande */
+            font-size: 20px; /* Tamaño optimizado para no romperse en pantallas chicas */
             font-weight: 900; 
-            letter-spacing: -0.5px;
             text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
         }
-        .status { color: #22c55e; font-size: 11px; font-weight: bold; margin-bottom: 5px; display: block; }
 
-        .container { padding: 10px; }
+        /* CONTENEDOR FLEXIBLE */
+        .container { 
+            width: 100%; 
+            padding: 8px; 
+            max-width: 100vw; 
+        }
 
-        /* CALENDARIO 3D */
+        /* CALENDARIO AUTO-AJUSTABLE */
         #calendar { 
             background: var(--card); 
-            border-radius: 18px; 
+            border-radius: 12px; 
             border: 1px solid var(--border);
-            padding: 5px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 10px #000;
+            width: 100%;
+            max-width: 100%;
         }
 
-        /* CABECERA DÍAS OSCUROS */
-        .fc-col-header-cell { background: #070d11 !important; border: 1px solid #1c272e !important; }
-        .fc-col-header-cell-cushion { color: var(--blue) !important; font-size: 12px; font-weight: 800; padding: 10px 0 !important; }
+        /* Ajuste de celdas para que no se estiren */
+        .fc-daygrid-day-frame { overflow: hidden; }
+        .fc-daygrid-day { min-height: 90px !important; }
 
-        /* CELDAS Y NOMBRES GIGANTES */
-        .fc-daygrid-day { min-height: 115px !important; border: 1px solid #1c272e !important; }
-        .fc-daygrid-day-number { font-size: 16px; font-weight: 900; color: #667781; padding: 8px !important; }
-        
+        /* NOMBRES DENTRO DEL CALENDARIO */
         .fc-event {
             background: linear-gradient(145deg, #1e2a33, #111b21) !important;
-            border: 2px solid var(--blue) !important; /* Borde más grueso */
-            border-radius: 8px !important;
-            padding: 8px 4px !important;
-            margin: 2px !important;
-            box-shadow: 4px 4px 8px #000;
-        }
-        .fc-event-title { 
-            font-size: 14px !important; /* Nombre mucho más grande */
-            font-weight: 900 !important;
-            color: #fff !important;
-            text-align: center;
-            line-height: 1.1;
+            border: 1.5px solid var(--blue) !important;
+            border-radius: 4px !important;
+            margin: 1px !important;
+            padding: 2px !important;
             display: block;
         }
+        .fc-event-title { 
+            font-size: 11px !important; /* Ajustado para que entre en el cuadrito */
+            font-weight: 800 !important;
+            white-space: normal !important; /* El nombre baja de renglón si es largo */
+            text-align: center;
+            word-wrap: break-word;
+        }
 
-        /* MODALES */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        /* MODAL RESPONSIVO */
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
+            display: none; align-items: center; justify-content: center; z-index: 1000; 
+        }
         .modal-content { 
             background: var(--card); 
-            width: 90%; 
-            padding: 30px 20px; 
-            border-radius: 25px; 
-            border: 1px solid #2a3942;
-            box-shadow: 0 0 40px #000;
+            width: 92%; /* Ajuste al ancho del cel */
+            max-width: 380px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 1px solid var(--border);
         }
         
         input[type="text"] { 
-            width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; border-radius: 15px; 
-            color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px;
-            box-shadow: inset 2px 2px 5px #000; outline: none;
+            width: 100%; height: 55px; background: #070d11; border: 1px solid #2a3942; border-radius: 10px; 
+            color: white; padding: 0 15px; font-size: 16px; margin-top: 10px;
         }
 
         .btn { 
-            width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; 
-            text-transform: uppercase; font-size: 14px; margin-top: 12px; cursor: pointer; color: white;
+            width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; 
+            text-transform: uppercase; margin-top: 10px; font-size: 13px;
         }
-        .btn-blue { background: var(--blue); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
-        .btn-red { background: var(--red); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-red { background: var(--red); color: white; }
+
+        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 8px; max-height: 150px; overflow-y: auto; }
+        .result-item { padding: 15px; border-bottom: 1px solid #1c272e; font-size: 14px; }
         
-        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 12px; max-height: 180px; overflow-y: auto; margin-top: 5px; }
-        .result-item { padding: 18px; border-bottom: 1px solid #1c272e; font-size: 16px; }
+        /* Ajustes para pantallas muy pequeñas (iPhone SE/5) */
+        @media (max-width: 340px) {
+            .app-bar h1 { font-size: 16px; }
+            .fc-col-header-cell-cushion { font-size: 10px; }
+            .fc-event-title { font-size: 9px !important; }
+        }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <span class="status">● SISTEMA CENTRALIZADO</span>
+    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● TERMINAL MÓVIL OPTIMIZADA</div>
     <h1>SALÓN DE USOS MÚLTIPLES</h1>
 </div>
 
@@ -126,23 +135,22 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="m-title" style="margin:0; color:var(--blue); letter-spacing: 1px; font-size: 12px;">GESTIÓN DE RESERVA</h3>
-        <p id="m-date" style="color:#556671; font-weight: 900; font-size: 20px; margin: 10px 0;"></p>
+        <h3 id="m-title" style="margin:0; color:var(--blue); font-size: 14px;">GESTIÓN DE FECHA</h3>
+        <p id="m-date" style="color:#556671; font-weight: bold; font-size: 18px; margin: 5px 0 15px 0;"></p>
 
         <div id="ui-crear">
             <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
             
-            <div id="selection-card" style="display:none; margin-top: 20px; padding: 20px; background: rgba(37,99,235,0.15); border-radius: 15px; border: 2px solid var(--blue);">
-                <span id="label-uf" style="font-size: 22px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
+            <div id="selection-card" style="display:none; margin-top: 15px; padding: 15px; background: rgba(37,99,235,0.1); border-radius: 12px; border: 1px solid var(--blue);">
+                <span id="label-uf" style="font-size: 18px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
             </div>
-            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR Y NOTIFICAR</button>
+            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR AHORA</button>
         </div>
 
         <div id="ui-ocupado" style="display:none">
-            <div style="padding:20px; background: rgba(225,29,72,0.15); border-radius:15px; border: 2px solid var(--red); text-align: center;">
-                <div style="color:var(--red); font-size: 11px; font-weight: 900; margin-bottom: 5px;">OCUPADO POR:</div>
-                <span id="info-reserva" style="font-size:22px; font-weight: 900; color: #fff;"></span>
+            <div style="padding:15px; background: rgba(225,29,72,0.1); border-radius:12px; border: 1px solid var(--red); text-align: center;">
+                <span id="info-reserva" style="font-size:18px; font-weight: 900; color: #fff;"></span>
             </div>
             <button class="btn btn-red" id="btn-delete">ELIMINAR REGISTRO</button>
         </div>
@@ -268,11 +276,6 @@
 
     window.closeM = () => document.getElementById('modal').style.display = 'none';
     init();
-
-    // Simular Registro de Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7IH0pOw==');
-    }
 </script>
 </body>
 </html>
