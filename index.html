@@ -2,9 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - 3D Dark Edition</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>SUM PRO</title>
     
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNVTSBQUk8iLAogICJzaG9ydF9uYW1lIjogIlNVTSBQUk8iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMTQxYSIsCiAgInRoZW1lX2NvbG9yIjogIzBiMTQxYSIKfQ==">
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
@@ -16,127 +20,104 @@
             --orange: #f59e0b; 
             --text: #e9edef;
             --border: #222d34;
-            --shadow: rgba(0, 0, 0, 0.6);
         }
 
         body { 
             margin: 0; 
             background: var(--bg); 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             color: var(--text);
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* BARRA SUPERIOR */
+        /* TÍTULO AGRANDADO ESTILO APP PROFESIONAL */
         .app-bar { 
             background: var(--card); 
-            padding: 15px; 
-            border-bottom: 2px solid var(--blue);
+            padding: 25px 15px 15px 15px; 
+            border-bottom: 3px solid var(--blue);
             text-align: center;
-            box-shadow: 0 4px 10px var(--shadow);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
+        .app-bar h1 { 
+            margin: 0; 
+            color: #fff; 
+            font-size: 24px; /* Título más grande */
+            font-weight: 900; 
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+        }
+        .status { color: #22c55e; font-size: 11px; font-weight: bold; margin-bottom: 5px; display: block; }
 
-        .container { padding: 12px; }
+        .container { padding: 10px; }
 
-        /* CALENDARIO CON RELIEVE 3D */
+        /* CALENDARIO 3D */
         #calendar { 
             background: var(--card); 
-            border-radius: 15px; 
-            border: 1px solid #1c272e;
+            border-radius: 18px; 
+            border: 1px solid var(--border);
             padding: 5px;
-            box-shadow: inset 2px 2px 5px #000, 5px 5px 15px var(--shadow);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 10px #000;
         }
 
-        /* CABECERA DE DÍAS OSCURA (Lunes, Martes...) */
-        .fc-col-header-cell { 
-            background: #070d11 !important; /* Más oscuro que el fondo */
-            padding: 12px 0 !important;
-            border: 1px solid var(--border) !important;
-        }
-        .fc-col-header-cell-cushion { 
-            color: var(--blue) !important; 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
+        /* CABECERA DÍAS OSCUROS */
+        .fc-col-header-cell { background: #070d11 !important; border: 1px solid #1c272e !important; }
+        .fc-col-header-cell-cushion { color: var(--blue) !important; font-size: 12px; font-weight: 800; padding: 10px 0 !important; }
 
-        /* CELDAS CON ASPECTO 3D */
-        .fc-daygrid-day { 
-            min-height: 100px !important; 
-            background: #111b21;
-            border: 1px solid #1c272e !important;
-            transition: 0.2s;
-        }
-        .fc-daygrid-day:hover { background: #16222a; }
+        /* CELDAS Y NOMBRES GIGANTES */
+        .fc-daygrid-day { min-height: 115px !important; border: 1px solid #1c272e !important; }
+        .fc-daygrid-day-number { font-size: 16px; font-weight: 900; color: #667781; padding: 8px !important; }
         
-        /* Efecto de relieve en los números */
-        .fc-daygrid-day-number { 
-            font-size: 15px; 
-            font-weight: 900; 
-            padding: 10px !important; 
-            color: #556671;
-            text-shadow: 1px 1px 2px #000;
-        }
-
-        /* HOY resaltado */
-        .fc-day-today { 
-            background: rgba(37, 99, 235, 0.05) !important; 
-            box-shadow: inset 0 0 10px rgba(37, 99, 235, 0.2);
-        }
-
-        /* EVENTOS (Nombres grandes y con relieve) */
         .fc-event {
             background: linear-gradient(145deg, #1e2a33, #111b21) !important;
-            border: 1px solid var(--blue) !important;
+            border: 2px solid var(--blue) !important; /* Borde más grueso */
             border-radius: 8px !important;
-            padding: 6px !important;
-            margin: 3px !important;
-            box-shadow: 3px 3px 6px #000, -1px -1px 3px rgba(255,255,255,0.05);
+            padding: 8px 4px !important;
+            margin: 2px !important;
+            box-shadow: 4px 4px 8px #000;
         }
         .fc-event-title { 
-            font-size: 12px !important; 
+            font-size: 14px !important; /* Nombre mucho más grande */
             font-weight: 900 !important;
             color: #fff !important;
-            text-transform: uppercase;
             text-align: center;
             line-height: 1.1;
+            display: block;
         }
 
-        /* MODAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
+        /* MODALES */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { 
             background: var(--card); 
-            width: 85%; 
-            padding: 25px; 
-            border-radius: 20px; 
+            width: 90%; 
+            padding: 30px 20px; 
+            border-radius: 25px; 
             border: 1px solid #2a3942;
-            box-shadow: 10px 10px 30px #000;
+            box-shadow: 0 0 40px #000;
         }
         
         input[type="text"] { 
-            width: 100%; height: 55px; background: #070d11; border: 1px solid #2a3942; border-radius: 12px; 
-            color: white; padding: 0 15px; font-size: 16px; margin-top: 10px;
-            box-shadow: inset 2px 2px 5px #000;
+            width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; border-radius: 15px; 
+            color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px;
+            box-shadow: inset 2px 2px 5px #000; outline: none;
         }
 
         .btn { 
-            width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; 
-            text-transform: uppercase; margin-top: 12px; cursor: pointer; color: white;
-            transition: 0.3s;
+            width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; 
+            text-transform: uppercase; font-size: 14px; margin-top: 12px; cursor: pointer; color: white;
         }
-        .btn-blue { background: var(--blue); box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); }
-        .btn-red { background: var(--red); box-shadow: 0 5px 15px rgba(225, 29, 72, 0.4); }
-        .btn-ghost { background: transparent; color: #556671; }
-
-        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 8px; max-height: 150px; overflow-y: auto; margin-top: 5px; }
-        .result-item { padding: 15px; border-bottom: 1px solid #1c272e; font-size: 14px; }
+        .btn-blue { background: var(--blue); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
+        .btn-red { background: var(--red); box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); }
+        
+        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 12px; max-height: 180px; overflow-y: auto; margin-top: 5px; }
+        .result-item { padding: 18px; border-bottom: 1px solid #1c272e; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● TERMINAL DE RESERVAS V9</div>
-    <h2 style="margin: 5px 0 0 0; color: var(--blue); font-size: 16px; letter-spacing: 2px;">SALA DE USOS MÚLTIPLES</h2>
+    <span class="status">● SISTEMA CENTRALIZADO</span>
+    <h1>SALÓN DE USOS MÚLTIPLES</h1>
 </div>
 
 <div class="container">
@@ -145,29 +126,28 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="m-title" style="margin:0; color:var(--blue); font-size: 14px;">GESTIÓN DE FECHA</h3>
-        <p id="m-date" style="color:#556671; font-weight: bold; margin: 10px 0;"></p>
+        <h3 id="m-title" style="margin:0; color:var(--blue); letter-spacing: 1px; font-size: 12px;">GESTIÓN DE RESERVA</h3>
+        <p id="m-date" style="color:#556671; font-weight: 900; font-size: 20px; margin: 10px 0;"></p>
 
         <div id="ui-crear">
-            <div style="font-size: 10px; color: var(--orange); font-weight: bold;">BUSCADOR POR UNIDAD:</div>
-            <input type="text" id="search-input" placeholder="Ej: 24A..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
             
-            <div id="selection-card" style="display:none; margin-top: 15px; padding: 15px; background: rgba(37,99,235,0.1); border-radius: 12px; border: 1px solid var(--blue);">
-                <span id="label-uf" style="font-size: 18px; font-weight: 900; color: #fff; display: block;"></span>
+            <div id="selection-card" style="display:none; margin-top: 20px; padding: 20px; background: rgba(37,99,235,0.15); border-radius: 15px; border: 2px solid var(--blue);">
+                <span id="label-uf" style="font-size: 22px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
             </div>
-            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR AHORA</button>
+            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR Y NOTIFICAR</button>
         </div>
 
         <div id="ui-ocupado" style="display:none">
-            <div style="padding:15px; background: rgba(225,29,72,0.1); border-radius:12px; border: 1px solid var(--red);">
-                <div style="color:var(--red); font-size: 10px; font-weight: bold;">TURNO ASIGNADO A:</div>
-                <span id="info-reserva" style="font-size:18px; font-weight: 900; color: #fff;"></span>
+            <div style="padding:20px; background: rgba(225,29,72,0.15); border-radius:15px; border: 2px solid var(--red); text-align: center;">
+                <div style="color:var(--red); font-size: 11px; font-weight: 900; margin-bottom: 5px;">OCUPADO POR:</div>
+                <span id="info-reserva" style="font-size:22px; font-weight: 900; color: #fff;"></span>
             </div>
-            <button class="btn btn-red" id="btn-delete">BORRAR REGISTRO</button>
+            <button class="btn btn-red" id="btn-delete">ELIMINAR REGISTRO</button>
         </div>
 
-        <button class="btn btn-ghost" onclick="closeM()">VOLVER</button>
+        <button class="btn" style="background:transparent; color:#556671" onclick="closeM()">CANCELAR</button>
     </div>
 </div>
 
@@ -250,7 +230,7 @@
 
     function abrir(fecha) {
         window.selectedDate = fecha;
-        document.getElementById('m-date').innerText = fecha.split('-').reverse().join('/');
+        document.getElementById('m-date').innerText = fecha.split('-').reverse().join(' / ');
         input.value = '';
         document.getElementById('selection-card').style.display = 'none';
         document.getElementById('btn-confirm').style.display = 'none';
@@ -271,26 +251,28 @@
 
     document.getElementById('btn-confirm').onclick = async () => {
         await addDoc(collection(db, "reservas_salon"), {
-            fecha: window.selectedDate,
-            uf: selUF.uf,
-            inquilino: selUF.inquilino,
-            tel: selUF.tel
+            fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel
         });
-        window.open(`https://wa.me/5491131552679?text=*NUEVA RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
+        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
-        if(prompt("CLAVE ADMINISTRADOR:") === MASTER_KEY) {
+        if(prompt("PASSWORD:") === MASTER_KEY) {
             const r = window.currentResInfo;
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/5491131552679?text=*RESERVA CANCELADA*%0AFecha: ${r.fecha}%0AUF: ${r.uf}`);
+            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${r.fecha}%0AUF: ${r.uf}`);
             closeM();
         }
     };
 
     window.closeM = () => document.getElementById('modal').style.display = 'none';
     init();
+
+    // Simular Registro de Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7IH0pOw==');
+    }
 </script>
 </body>
 </html>
