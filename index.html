@@ -3,83 +3,147 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Buscador Ordenado</title>
+    <title>SUM PRO - Mobile Style</title>
     
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
-        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --red: #e11d48; --orange: #f59e0b; --text: #e9edef; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
-        .app { width: 95%; max-width: 450px; margin: 0 auto; padding: 15px; }
-        
-        .header { background: var(--card); padding: 15px; border-bottom: 3px solid var(--blue); border-radius: 12px; margin-bottom: 20px; text-align: center; }
-        #calendar { background: var(--card); border-radius: 12px; padding: 10px; border: 1px solid #222d34; min-height: 480px; }
+        /* Paleta inspirada en tu App de referencia */
+        :root { 
+            --primary: #6200ee; /* Púrpura App */
+            --bg-body: #f5f5f5; 
+            --text-main: #333;
+            --blue-btn: #03dac6;
+            --red: #b00020;
+            --white: #ffffff;
+        }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); width: 88%; padding: 25px; border-radius: 20px; border-left: 5px solid var(--orange); }
-        
-        .search-box { position: relative; margin: 15px 0; }
-        input[type="text"] { width: 100%; height: 50px; background: #1a242b; border: 1px solid #333; border-radius: 10px; color: white; padding: 0 15px; box-sizing: border-box; font-size: 18px; font-weight: bold; text-transform: uppercase; }
-        
-        .results-list { position: absolute; width: 100%; background: #1f2c34; border: 1px solid #444; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .result-item { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .result-item:hover { background: var(--blue); }
-        .res-uf { color: var(--orange); font-weight: bold; background: rgba(245, 158, 11, 0.1); padding: 2px 6px; border-radius: 4px; }
-        .res-name { font-size: 14px; color: #fff; flex: 1; margin-left: 10px; text-align: right; }
+        body { 
+            margin: 0; 
+            background: var(--bg-body); 
+            font-family: 'Roboto', sans-serif; 
+            color: var(--text-main);
+        }
 
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; color: white; }
-        .btn-blue { background: var(--blue); }
-        .btn-red { background: var(--red); }
+        /* Encabezado Estilo App */
+        .app-bar { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .app-bar h2 { margin: 0; font-size: 18px; font-weight: 500; }
+
+        /* Contenedor Calendario */
+        .container { padding: 10px; }
+        #calendar { 
+            background: var(--white); 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Personalización FullCalendar para que parezca App */
+        .fc { border: none !important; }
+        .fc-toolbar { 
+            background: #eee; 
+            padding: 10px !important; 
+            margin: 0 !important; 
+            border-bottom: 1px solid #ddd;
+        }
+        .fc-toolbar-title { font-size: 16px !important; font-weight: bold; text-transform: uppercase; color: var(--primary); }
+        .fc-col-header-cell { background: #fafafa; padding: 10px 0 !important; font-size: 12px; color: #777; }
         
-        .hidden { display: none; }
-        #debug { font-size: 9px; color: #40c4ff; margin-top: 10px; text-align: center; font-family: monospace; }
-        .selection-box { background: rgba(37, 99, 235, 0.1); padding: 15px; border-radius: 10px; border: 1px solid var(--blue); margin-bottom: 15px; }
+        /* Estilo de los números y celdas (Foto 2) */
+        .fc-daygrid-day-number { font-size: 13px; font-weight: bold; padding: 5px !important; color: #444; }
+        .fc-daygrid-day { border: 0.5px solid #eee !important; min-height: 100px !important; }
+        
+        /* Eventos (Nombre del inquilino en el cuadro) */
+        .fc-event {
+            background: transparent !important;
+            border: none !important;
+            color: #555 !important;
+            padding: 2px !important;
+            white-space: normal !important;
+            font-size: 10px !important;
+            text-align: center;
+            font-weight: 500;
+        }
+        .fc-event-title { 
+            display: block; 
+            line-height: 1.2;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Modal Estilo Material Design */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { 
+            background: var(--white); 
+            width: 90%; 
+            max-width: 400px; 
+            border-radius: 4px; 
+            padding: 20px; 
+            box-shadow: 0 24px 38px rgba(0,0,0,0.3);
+        }
+        
+        .search-box input {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; margin: 10px 0;
+        }
+        .results-list { border: 1px solid #eee; max-height: 150px; overflow-y: auto; }
+        .result-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+
+        .btn { 
+            width: 100%; padding: 12px; border-radius: 4px; border: none; font-weight: bold; 
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; cursor: pointer;
+        }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-delete { background: var(--red); color: white; }
+        .btn-cancel { background: #eee; color: #666; }
+
+        #debug { font-size: 10px; color: #999; text-align: center; padding: 10px; }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <div class="header">
-        <div style="font-size: 10px; color: #22c55e; font-weight: bold; margin-bottom: 10px;">● GESTIÓN SUM - ORDEN ASCENDENTE</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn" style="background:#374151; padding:10px" onclick="location.reload()">REINTENTAR</button>
-            <button class="btn btn-red" style="padding:10px" onclick="window.close()">CERRAR</button>
-        </div>
-        <div id="debug">Sincronizando base de datos...</div>
-    </div>
+<div class="app-bar">
+    <h2>📅 Reservas SUM</h2>
+</div>
+
+<div class="container">
     <div id="calendar"></div>
 </div>
 
+<div id="debug">Iniciando sistema...</div>
+
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 style="margin:0; color:var(--blue)">Agendar SUM</h3>
-        <p id="m-date" style="font-size:13px; color:#888; margin: 5px 0 15px 0;"></p>
-        
+        <h3 id="m-title" style="margin-top:0; color:var(--primary)">Gestionar Fecha</h3>
+        <p id="m-date" style="color:#666; font-size:14px"></p>
+
         <div id="ui-crear">
-            <label style="font-size:11px; color:var(--orange); font-weight: bold;">BUSCAR DPTO / UNIDAD:</label>
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="Ej: 24A..." autocomplete="off">
+                <input type="text" id="search-input" placeholder="Buscar Dpto o Inquilino...">
                 <div id="results" class="results-list"></div>
             </div>
-            
-            <div id="selection-card" class="hidden">
-                <div class="selection-box">
-                    <span id="label-uf" style="font-size: 20px; font-weight: bold; color: var(--blue); display: block;"></span>
-                    <span id="label-inquilino" style="font-size: 13px; color: #e9edef;"></span>
-                </div>
-                <button class="btn btn-blue" id="btn-confirm">CONFIRMAR RESERVA</button>
+            <div id="selection-card" style="display:none; background:#f0f7ff; padding:10px; margin-bottom:10px; border-radius:4px">
+                <small>Seleccionado:</small><br><b id="label-uf"></b>
             </div>
+            <button class="btn btn-confirm" id="btn-confirm" style="display:none">AGENDAR RESERVA</button>
         </div>
 
-        <div id="ui-ocupado" class="hidden">
-            <div style="background:#1a242b; padding:15px; border-radius:10px; border-left: 4px solid var(--red);">
-                <p style="color:var(--red); font-weight:bold; margin:0">DÍA NO DISPONIBLE</p>
-                <p id="info-reserva" style="font-size:18px; font-weight:bold; margin:5px 0 0 0;"></p>
+        <div id="ui-ocupado" style="display:none">
+            <div style="padding:15px; background:#fff5f5; border-radius:4px; margin-bottom:15px">
+                <b style="color:var(--red)">OCUPADO POR:</b><br>
+                <span id="info-reserva" style="font-size:18px"></span>
             </div>
-            <button class="btn btn-red" id="btn-delete" style="margin-top:20px;">ELIMINAR ESTA RESERVA</button>
+            <button class="btn btn-delete" id="btn-delete">ELIMINAR RESERVA</button>
         </div>
 
-        <button class="btn" style="background:transparent; color:#888" onclick="closeM()">VOLVER</button>
+        <button class="btn btn-cancel" onclick="closeM()">VOLVER</button>
     </div>
 </div>
 
@@ -108,12 +172,11 @@
     async function init() {
         const snap = await getDocs(collection(db, "departamentos"));
         dataUFs = snap.docs.map(d => ({
-            id: d.id,
             uf: parseInt(d.data().UF || d.data().Unidad) || 0,
             inquilino: d.data().Inquilino || d.data().NombreInquilino || "",
             tel: d.data().TelefonoInquilino || ""
         }));
-        document.getElementById('debug').innerText = "LISTO: " + dataUFs.length + " UNIDADES CARGADAS";
+        document.getElementById('debug').innerText = "Sistema conectado";
     }
 
     const input = document.getElementById('search-input');
@@ -124,90 +187,82 @@
         results.innerHTML = '';
         if(val.length < 1) { results.style.display = 'none'; return; }
         
-        // 1. Filtrar coincidencias
         let filtered = dataUFs.filter(item => 
-            item.inquilino.toLowerCase().includes(val) || 
-            item.uf.toString().includes(val)
-        );
+            item.inquilino.toLowerCase().includes(val) || item.uf.toString().includes(val)
+        ).sort((a,b) => a.uf - b.uf);
 
-        // 2. ORDENAR ASCENDENTE POR UF (De menor a mayor)
-        filtered.sort((a, b) => a.uf - b.uf);
-
-        // 3. Mostrar resultados
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'result-item';
-            div.innerHTML = `
-                <span class="res-uf">UF ${item.uf}</span>
-                <span class="res-name">${item.inquilino}</span>
-            `;
+            div.innerHTML = `<b>UF ${item.uf}</b> - ${item.inquilino}`;
             div.onclick = () => {
                 selUF = item;
-                input.value = `UF ${item.uf} - ${item.inquilino}`;
+                input.value = item.inquilino;
                 results.style.display = 'none';
-                document.getElementById('selection-card').classList.remove('hidden');
-                document.getElementById('label-uf').innerText = `UNIDAD SELECCIONADA: ${item.uf}`;
-                document.getElementById('label-inquilino').innerText = item.inquilino;
+                document.getElementById('selection-card').style.display = 'block';
+                document.getElementById('btn-confirm').style.display = 'block';
+                document.getElementById('label-uf').innerText = `UF ${item.uf} (${item.inquilino})`;
             };
             results.appendChild(div);
         });
         results.style.display = filtered.length > 0 ? 'block' : 'none';
     });
 
-    // CALENDARIO
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'dayGridMonth', locale: 'es', height: 'auto',
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+        height: 'auto',
         dateClick: (info) => abrir(info.dateStr)
     });
     calendar.render();
 
-    // ESCUCHAR RESERVAS
     onSnapshot(collection(db, "reservas_salon"), (s) => {
         reservas = s.docs.map(d => ({id: d.id, ...d.data()}));
         calendar.setOption('events', reservas.map(r => ({
-            title: `UF ${r.uf}`, start: r.fecha, color: '#e11d48'
+            title: r.inquilino, // Mostramos el nombre directamente en el calendario
+            start: r.fecha,
+            display: 'block'
         })));
     });
 
     function abrir(fecha) {
         window.selectedDate = fecha;
-        document.getElementById('m-date').innerText = "Reserva para el " + fecha;
+        document.getElementById('m-date').innerText = fecha;
         input.value = '';
-        document.getElementById('selection-card').classList.add('hidden');
-        results.style.display = 'none';
-
+        document.getElementById('selection-card').style.display = 'none';
+        document.getElementById('btn-confirm').style.display = 'none';
+        
         const res = reservas.find(r => r.fecha === fecha);
         if(res) {
             window.currentResId = res.id;
             window.currentResInfo = res;
-            document.getElementById('ui-crear').classList.add('hidden');
-            document.getElementById('ui-ocupado').classList.remove('hidden');
-            document.getElementById('info-reserva').innerText = `UF ${res.uf} (${res.inquilino})`;
+            document.getElementById('ui-crear').style.display = 'none';
+            document.getElementById('ui-ocupado').style.display = 'block';
+            document.getElementById('info-reserva').innerText = `${res.inquilino} (UF ${res.uf})`;
         } else {
-            document.getElementById('ui-crear').classList.remove('hidden');
-            document.getElementById('ui-ocupado').classList.add('hidden');
+            document.getElementById('ui-crear').style.display = 'block';
+            document.getElementById('ui-ocupado').style.display = 'none';
         }
         document.getElementById('modal').style.display = 'flex';
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
-        if(!selUF) return;
         await addDoc(collection(db, "reservas_salon"), {
             fecha: window.selectedDate,
             uf: selUF.uf,
             inquilino: selUF.inquilino,
-            tel: selUF.tel,
-            ts: new Date()
+            tel: selUF.tel
         });
-        window.open(`https://wa.me/${ADMIN_TEL}?text=*RESERVA SUM*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0ADpto: ${selUF.inquilino}`);
+        window.open(`https://wa.me/${ADMIN_TEL}?text=*NUEVA RESERVA*%0AFecha: ${window.selectedDate}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
-        if(prompt("CLAVE DE ADMINISTRADOR:") === MASTER_KEY) {
+        if(prompt("CLAVE:") === MASTER_KEY) {
             const r = window.currentResInfo;
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/${ADMIN_TEL}?text=*CANCELACIÓN SUM*%0AFecha: ${r.fecha}%0AUF: ${r.uf}%0ADpto: ${r.inquilino}`);
+            window.open(`https://wa.me/${ADMIN_TEL}?text=*CANCELACIÓN*%0AFecha: ${r.fecha}%0AUF: ${r.uf}`);
             closeM();
         }
     };
