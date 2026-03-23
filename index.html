@@ -3,71 +3,29 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SUM PRO">
-    
     <link rel="apple-touch-icon" href="icono.png">
     <link rel="icon" type="image/png" href="icono.png">
-
     <link rel="manifest" id="manifest-placeholder">
     <title>SUM PRO</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    
     <style>
         * { box-sizing: border-box; }
-        :root { 
-            --bg: #0b141a; --card: #111b21; --blue: #2563eb; 
-            --red: #e11d48; --orange: #f59e0b; --text: #e9edef; --border: #222d34;
-        }
-
-        body { 
-            margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; 
-            color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;
-        }
-
-        /* BARRA SUPERIOR */
-        .app-bar { 
-            background: var(--card); padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue);
-            text-align: center; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        }
-        .app-bar h1 { 
-            margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; 
-            text-transform: uppercase; letter-spacing: -1px;
-        }
-
+        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --red: #e11d48; --orange: #f59e0b; --text: #e9edef; --border: #222d34; }
+        body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; }
+        .app-bar { background: var(--card); padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; text-transform: uppercase; }
         .container { width: 100%; padding: 10px; }
         #calendar { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
-
-        /* NOMBRES GIGANTES Y LEGIBLES EN EL CALENDARIO */
-        .fc-event {
-            background: linear-gradient(145deg, #1e2a33, #111b21) !important;
-            border: 2px solid var(--blue) !important; border-radius: 6px !important;
-            margin: 2px !important; padding: 5px 2px !important;
-        }
-        .fc-event-title { 
-            font-size: 13px !important; font-weight: 900 !important; color: #fff !important;
-            white-space: normal !important; text-align: center; line-height: 1.1;
-        }
-
-        /* MODAL */
+        .fc-event { background: linear-gradient(145deg, #1e2a33, #111b21) !important; border: 2px solid var(--blue) !important; border-radius: 6px !important; padding: 5px 2px !important; }
+        .fc-event-title { font-size: 13px !important; font-weight: 900 !important; color: #fff !important; white-space: normal !important; text-align: center; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { 
-            background: var(--card); width: 92%; max-width: 380px; 
-            padding: 25px; border-radius: 25px; border: 1px solid var(--border);
-        }
-        
-        input[type="text"] { 
-            width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; 
-            border-radius: 12px; color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px;
-        }
-
-        .btn { width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 12px; font-size: 14px; }
+        .modal-content { background: var(--card); width: 92%; max-width: 380px; padding: 25px; border-radius: 25px; border: 1px solid var(--border); }
+        input[type="text"] { width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; border-radius: 12px; color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px; outline: none; }
+        .btn { width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 12px; font-size: 14px; cursor: pointer; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-red { background: var(--red); color: white; }
-
         .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 10px; max-height: 180px; overflow-y: auto; margin-top: 5px; }
         .result-item { padding: 18px; border-bottom: 1px solid #1c272e; font-size: 16px; }
     </style>
@@ -87,23 +45,20 @@
     <div class="modal-content">
         <h3 style="margin:0; color:var(--blue); font-size: 11px; letter-spacing: 1px;">FECHA SELECCIONADA</h3>
         <p id="m-date" style="color:#fff; font-weight: 900; font-size: 24px; margin: 5px 0 20px 0;"></p>
-
         <div id="ui-crear">
             <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
             <div id="selection-card" style="display:none; margin-top: 20px; padding: 20px; background: rgba(37,99,235,0.15); border-radius: 15px; border: 2px solid var(--blue);">
                 <span id="label-uf" style="font-size: 20px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
             </div>
-            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR Y NOTIFICAR</button>
+            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR AHORA</button>
         </div>
-
         <div id="ui-ocupado" style="display:none">
             <div style="padding:20px; background: rgba(225,29,72,0.15); border-radius:15px; border: 2px solid var(--red); text-align: center;">
                 <span id="info-reserva" style="font-size:20px; font-weight: 900; color: #fff;"></span>
             </div>
             <button class="btn btn-red" id="btn-delete">BORRAR ESTA RESERVA</button>
         </div>
-
         <button class="btn" style="background:transparent; color:#556671" onclick="closeM()">CANCELAR</button>
     </div>
 </div>
@@ -124,38 +79,18 @@
     const app = initializeApp(config);
     const db = getFirestore(app);
     const MASTER_KEY = "1131552679";
-
     const formatFechaLegible = (f) => f.split('-').reverse().join('-');
 
-    // --- CONFIGURACIÓN DE PWA CON TU ICONO LOCAL ---
-    const myManifest = {
-        "name": "SUM PRO",
-        "short_name": "SUM PRO",
-        "start_url": ".",
-        "display": "standalone",
-        "background_color": "#0b141a",
-        "theme_color": "#0b141a",
-        "icons": [
-            { "src": "icono.png", "sizes": "192x192", "type": "image/png" },
-            { "src": "icono.png", "sizes": "512x512", "type": "image/png" }
-        ]
-    };
-    const blob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
-    document.querySelector('#manifest-placeholder').setAttribute('href', URL.createObjectURL(blob));
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs=');
-    }
+    // --- PWA ---
+    const myManifest = { "name": "SUM PRO", "short_name": "SUM PRO", "start_url": ".", "display": "standalone", "background_color": "#0b141a", "theme_color": "#0b141a", "icons": [{ "src": "icono.png", "sizes": "512x512", "type": "image/png" }] };
+    document.querySelector('#manifest-placeholder').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(myManifest)], {type: 'application/json'})));
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs='); }
 
     let dataUFs = []; let reservas = []; let selUF = null;
 
     async function init() {
         const snap = await getDocs(collection(db, "departamentos"));
-        dataUFs = snap.docs.map(d => ({
-            uf: parseInt(d.data().UF || d.data().Unidad) || 0,
-            inquilino: d.data().Inquilino || d.data().NombreInquilino || "",
-            tel: d.data().TelefonoInquilino || ""
-        }));
+        dataUFs = snap.docs.map(d => ({ uf: parseInt(d.data().UF || d.data().Unidad) || 0, inquilino: d.data().Inquilino || d.data().NombreInquilino || "", tel: d.data().TelefonoInquilino || "" }));
     }
 
     const input = document.getElementById('search-input');
@@ -170,20 +105,14 @@
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `<b style="color:var(--orange)">UF ${item.uf}</b> - ${item.inquilino}`;
-            div.onclick = () => {
-                selUF = item; input.value = item.inquilino; results.style.display = 'none';
-                document.getElementById('selection-card').style.display = 'block';
-                document.getElementById('btn-confirm').style.display = 'block';
-                document.getElementById('label-uf').innerText = `UF ${item.uf} | ${item.inquilino}`;
-            };
+            div.onclick = () => { selUF = item; input.value = item.inquilino; results.style.display = 'none'; document.getElementById('selection-card').style.display = 'block'; document.getElementById('btn-confirm').style.display = 'block'; document.getElementById('label-uf').innerText = `UF ${item.uf} | ${item.inquilino}`; };
             results.appendChild(div);
         });
         results.style.display = filtered.length > 0 ? 'block' : 'none';
     });
 
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'dayGridMonth', locale: 'es', height: 'auto',
-        headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+        initialView: 'dayGridMonth', locale: 'es', height: 'auto', headerToolbar: { left: 'prev', center: 'title', right: 'next' },
         dateClick: (info) => abrir(info.dateStr)
     });
     calendar.render();
@@ -207,6 +136,7 @@
             document.getElementById('ui-ocupado').style.display = 'block';
             document.getElementById('info-reserva').innerText = res.inquilino;
         } else {
+            window.currentResId = null;
             document.getElementById('ui-crear').style.display = 'block';
             document.getElementById('ui-ocupado').style.display = 'none';
         }
@@ -214,21 +144,31 @@
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
+        if(!selUF) return;
         await addDoc(collection(db, "reservas_salon"), { fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel });
-        window.open(`https://wa.me/5491131552679?text=*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
+        window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
         closeM();
     };
 
     document.getElementById('btn-delete').onclick = async () => {
-        if(prompt("PASSWORD:") === MASTER_KEY) {
-            const r = window.currentResInfo;
-            await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/5491131552679?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
-            closeM();
+        if(!window.currentResId) return;
+        const pass = prompt("CLAVE DE ADMINISTRADOR:");
+        if(pass === MASTER_KEY) {
+            try {
+                const r = window.currentResInfo;
+                const docRef = doc(db, "reservas_salon", window.currentResId);
+                await deleteDoc(docRef);
+                window.open(`https://wa.me/549${MASTER_KEY}?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
+                closeM();
+            } catch (e) {
+                alert("Error al eliminar: " + e.message);
+            }
+        } else if (pass !== null) {
+            alert("Clave incorrecta");
         }
     };
 
-    window.closeM = () => document.getElementById('modal').style.display = 'none';
+    window.closeM = () => { document.getElementById('modal').style.display = 'none'; selUF = null; };
     init();
 </script>
 </body>
