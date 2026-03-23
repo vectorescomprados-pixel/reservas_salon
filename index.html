@@ -12,47 +12,44 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        :root { --bg: #0b141a; --card: #111b21; --blue: #2563eb; --red: #e11d48; --orange: #f59e0b; --text: #e9edef; --border: #222d34; }
+        :root { --bg: #0b141a; --card: #1c272e; --blue: #1d6ed7; --red: #e91e63; --text: #e9edef; --border: #2a3942; }
         
-        body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; }
         
-        .app-bar { background: var(--card); padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        .app-bar { background: #111b21; padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; }
         .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; text-transform: uppercase; }
 
         .container { width: 100%; padding: 10px; }
+        #calendar { background: #111b21; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
         
-        /* CORRECCIÓN DE COLORES DEL CALENDARIO (VISIBILIDAD TOTAL) */
-        #calendar { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
-        
-        /* Números de los días (Blancos y grandes) */
-        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; padding: 5px !important; text-decoration: none !important; }
-        
-        /* Cabecera (Días de la semana) */
-        .fc-col-header-cell { background: #070d11 !important; }
-        .fc-col-header-cell-cushion { color: #00d2ff !important; font-weight: 900 !important; text-transform: uppercase; font-size: 11px !important; }
+        /* CALENDARIO VISIBLE */
+        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; }
+        .fc-col-header-cell-cushion { color: #00d2ff !important; font-weight: 900 !important; text-transform: uppercase; }
 
-        /* Eventos (Reservas) */
-        .fc-event { background: linear-gradient(145deg, #1e2a33, #111b21) !important; border: 2px solid var(--blue) !important; border-radius: 6px !important; padding: 4px 2px !important; }
-        .fc-event-title { font-size: 12px !important; font-weight: 900 !important; color: #fff !important; white-space: normal !important; text-align: center; }
+        /* MODALES GENERALES */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 30px; border-radius: 28px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #32444e; }
+        
+        /* ESTILO DE INPUTS TIPO FOTO */
+        .input-styled { width: 100%; height: 55px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; font-size: 16px; margin: 15px 0; outline: none; text-align: center; }
+        .input-styled::placeholder { color: #8696a0; }
 
-        /* MODAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
-        .modal-content { background: var(--card); width: 100%; max-width: 400px; padding: 25px; border-radius: 25px; border: 1px solid var(--border); box-shadow: 0 10px 40px #000; }
-        
-        input[type="text"] { width: 100%; height: 60px; background: #070d11; border: 1px solid #2a3942; border-radius: 12px; color: white; padding: 0 15px; font-size: 18px; font-weight: bold; margin-top: 15px; outline: none; border-left: 4px solid var(--blue); }
-        
-        .btn { width: 100%; padding: 20px; border-radius: 15px; border: none; font-weight: 900; text-transform: uppercase; margin-top: 12px; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-blue { background: var(--blue); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        /* BOTONES SEGÚN LA FOTO */
+        .row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .btn-blue { background: var(--blue); color: white; }
         .btn-red { background: var(--red); color: white; }
-        
-        .results-list { background: #070d11; border: 1px solid #2a3942; border-radius: 10px; max-height: 180px; overflow-y: auto; margin-top: 5px; }
-        .result-item { padding: 18px; border-bottom: 1px solid #1c272e; font-size: 16px; color: #fff; }
+        .btn-ghost { background: transparent; color: #8696a0; border: 1px solid #32444e; }
+
+        /* BUSCADOR RESULTADOS */
+        .results-list { background: #111b21; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; }
+        .result-item { padding: 15px; border-bottom: 1px solid #2a3942; font-size: 15px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #22c55e; font-size: 10px; font-weight: bold; letter-spacing: 2px;">● TERMINAL SUM ACTIVA</div>
+    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● SEGURIDAD ACTIVA</div>
     <h1>SALÓN DE USOS MÚLTIPLES</h1>
 </div>
 
@@ -62,26 +59,39 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 style="margin:0; color:var(--blue); font-size: 11px; letter-spacing: 1px;">FECHA SELECCIONADA</h3>
-        <p id="m-date" style="color:#fff; font-weight: 900; font-size: 24px; margin: 5px 0 20px 0;"></p>
+        <h3 id="m-date" style="margin:0; color:#fff; font-size: 22px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
-            <input type="text" id="search-input" placeholder="BUSCAR DPTO O NOMBRE..." autocomplete="off">
+            <input type="text" id="search-input" class="input-styled" placeholder="Buscar Unidad o Apellido..." autocomplete="off">
             <div id="results" class="results-list" style="display:none"></div>
-            <div id="selection-card" style="display:none; margin-top: 20px; padding: 20px; background: rgba(37,99,235,0.15); border-radius: 15px; border: 2px solid var(--blue);">
-                <span id="label-uf" style="font-size: 20px; font-weight: 900; color: #fff; display: block; text-align: center;"></span>
+            <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 12px; border: 1px solid var(--blue);">
+                <span id="label-uf" style="font-weight: 900; color: #fff;"></span>
             </div>
-            <button class="btn btn-blue" id="btn-confirm" style="display:none">AGENDAR AHORA</button>
+            <button class="btn btn-blue" id="btn-confirm" style="display:none; width:100%">Confirmar y Avisar</button>
         </div>
 
         <div id="ui-ocupado" style="display:none">
-            <div style="padding:20px; background: rgba(225,29,72,0.15); border-radius:15px; border: 2px solid var(--red); text-align: center;">
-                <span id="info-reserva" style="font-size:20px; font-weight: 900; color: #fff;"></span>
+            <div style="margin: 20px 0; padding:20px; background: rgba(233,30,99,0.05); border-radius:15px; border: 1px solid #443339;">
+                <span id="info-reserva" style="font-size:18px; font-weight: 800; color: #fff;"></span>
             </div>
-            <button class="btn btn-red" id="btn-delete">BORRAR ESTA RESERVA</button>
+            <button class="btn btn-red" style="width:100%" onclick="abrirSeguridad()">Eliminar Reserva</button>
         </div>
 
-        <button class="btn" style="background:transparent; color:#556671" onclick="closeM()">CANCELAR</button>
+        <button class="btn btn-ghost" style="width:100%; margin-top:10px" onclick="closeM()">Volver</button>
+    </div>
+</div>
+
+<div id="modal-seguridad" class="modal">
+    <div class="modal-content">
+        <h2 style="margin:0; color:#fff; font-size: 20px; font-weight: 700;">Seguridad Requerida</h2>
+        <p id="seg-desc" style="color:#8696a0; font-size: 14px; margin-top: 8px;"></p>
+        
+        <input type="password" id="admin-pass" class="input-styled" placeholder="Clave Administrativa">
+        
+        <div class="row">
+            <button class="btn btn-blue" id="btn-autorizar">AUTORIZAR</button>
+            <button class="btn btn-red" onclick="cerrarSeguridad()">VOLVER</button>
+        </div>
     </div>
 </div>
 
@@ -110,14 +120,8 @@
     let dataUFs = []; let reservas = []; let selUF = null;
 
     async function init() {
-        try {
-            const snap = await getDocs(collection(db, "departamentos"));
-            dataUFs = snap.docs.map(d => ({ 
-                uf: parseInt(d.data().UF || d.data().Unidad) || 0, 
-                inquilino: d.data().Inquilino || d.data().NombreInquilino || "Sin Nombre", 
-                tel: d.data().TelefonoInquilino || "" 
-            }));
-        } catch(e) { console.error("Error cargando UFs"); }
+        const snap = await getDocs(collection(db, "departamentos"));
+        dataUFs = snap.docs.map(d => ({ uf: parseInt(d.data().UF || d.data().Unidad) || 0, inquilino: d.data().Inquilino || d.data().NombreInquilino || "", tel: d.data().TelefonoInquilino || "" }));
     }
 
     const input = document.getElementById('search-input');
@@ -131,14 +135,12 @@
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'result-item';
-            div.innerHTML = `<b style="color:var(--orange)">UF ${item.uf}</b> - ${item.inquilino}`;
+            div.innerHTML = `<b style="color:var(--blue)">UF ${item.uf}</b> - ${item.inquilino}`;
             div.onclick = () => { 
-                selUF = item; 
-                input.value = item.inquilino; 
-                results.style.display = 'none'; 
-                document.getElementById('selection-card').style.display = 'block'; 
-                document.getElementById('btn-confirm').style.display = 'block'; 
-                document.getElementById('label-uf').innerText = `UF ${item.uf} | ${item.inquilino}`; 
+                selUF = item; input.value = item.inquilino; results.style.display = 'none';
+                document.getElementById('selection-card').style.display = 'block';
+                document.getElementById('btn-confirm').style.display = 'block';
+                document.getElementById('label-uf').innerText = `UF ${item.uf} | ${item.inquilino}`;
             };
             results.appendChild(div);
         });
@@ -161,53 +163,51 @@
         window.selectedDate = fecha;
         document.getElementById('m-date').innerText = formatFechaLegible(fecha);
         input.value = '';
-        results.style.display = 'none';
         document.getElementById('selection-card').style.display = 'none';
         document.getElementById('btn-confirm').style.display = 'none';
-        
         const res = reservas.find(r => r.fecha === fecha);
         if(res) {
             window.currentResId = res.id;
             window.currentResInfo = res;
             document.getElementById('ui-crear').style.display = 'none';
             document.getElementById('ui-ocupado').style.display = 'block';
-            document.getElementById('info-reserva').innerText = res.inquilino;
+            document.getElementById('info-reserva').innerText = `UF ${res.uf} - ${res.inquilino}`;
         } else {
-            window.currentResId = null;
-            window.currentResInfo = null;
             document.getElementById('ui-crear').style.display = 'block';
             document.getElementById('ui-ocupado').style.display = 'none';
         }
         document.getElementById('modal').style.display = 'flex';
     }
 
-    document.getElementById('btn-confirm').onclick = async () => {
-        if(!selUF || !window.selectedDate) return;
-        try {
-            await addDoc(collection(db, "reservas_salon"), { fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel });
-            window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
-            closeM();
-        } catch(e) { alert("Error al guardar reserva."); }
+    // LÓGICA DE BORRADO ESTILO FOTO
+    window.abrirSeguridad = () => {
+        document.getElementById('seg-desc').innerText = `¿Borrar registro UF ${window.currentResInfo.uf}?`;
+        document.getElementById('admin-pass').value = '';
+        document.getElementById('modal-seguridad').style.display = 'flex';
     };
 
-    document.getElementById('btn-delete').onclick = async () => {
-        if(!window.currentResId) return;
-        const pass = prompt("CLAVE ADMINISTRADOR:");
+    window.cerrarSeguridad = () => document.getElementById('modal-seguridad').style.display = 'none';
+
+    document.getElementById('btn-autorizar').onclick = async () => {
+        const pass = document.getElementById('admin-pass').value;
         if(pass === MASTER_KEY) {
-            try {
-                const r = window.currentResInfo;
-                await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-                window.open(`https://wa.me/549${MASTER_KEY}?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
-                closeM();
-            } catch (e) { alert("Error al eliminar documento."); }
-        } else if (pass !== null) { alert("Clave incorrecta."); }
+            const r = window.currentResInfo;
+            await deleteDoc(doc(db, "reservas_salon", window.currentResId));
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*CANCELACIÓN SUM*%0AFecha: ${formatFechaLegible(r.fecha)}%0AUF: ${r.uf}`);
+            cerrarSeguridad();
+            closeM();
+        } else {
+            alert("Clave administrativa incorrecta");
+        }
     };
 
-    window.closeM = () => { 
-        document.getElementById('modal').style.display = 'none'; 
-        selUF = null;
-        window.currentResId = null;
+    document.getElementById('btn-confirm').onclick = async () => {
+        await addDoc(collection(db, "reservas_salon"), { fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, tel: selUF.tel });
+        window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`);
+        closeM();
     };
+
+    window.closeM = () => document.getElementById('modal').style.display = 'none';
     init();
 </script>
 </body>
