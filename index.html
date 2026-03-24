@@ -3,24 +3,149 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUM PRO FINAL</title>
+<title>SUM PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
-body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
-#calendar { height:85vh; margin:10px; background:#111b21; border-radius:12px; padding:10px; }
 
-.modal { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:99999; }
-.modal-content { background:#1c272e; padding:20px; border-radius:20px; width:90%; max-width:360px; text-align:center; }
+/* 🌌 BASE */
+body{
+margin:0;
+font-family:-apple-system,sans-serif;
+background: radial-gradient(circle at top,#0f2027,#0b141a);
+color:#fff;
+}
 
-.input { width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #333; background:#222; color:#fff; text-align:center; }
-.btn { width:100%; padding:12px; border:none; border-radius:10px; margin-top:10px; font-weight:bold; cursor:pointer; }
-.blue { background:#00a884; color:#fff; }
-.green { background:#25d366; color:#fff; }
+/* 📅 CALENDARIO */
+#calendar{
+height:calc(100vh - 20px);
+margin:10px;
+background:#111b21;
+border-radius:15px;
+padding:10px;
+}
 
-#preview { width:100%; max-height:200px; display:none; margin:10px 0; border-radius:10px; }
-#loading { display:none; color:#00d2ff; margin:10px 0; }
+/* 🧊 MODAL */
+.modal{
+position:fixed;
+inset:0;
+display:none;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,.7);
+backdrop-filter:blur(10px);
+z-index:999999;
+}
+
+/* 🪟 CARD */
+.modal-content{
+width:95%;
+max-width:380px;
+padding:25px;
+border-radius:20px;
+
+background:rgba(28,39,46,0.7);
+backdrop-filter:blur(15px);
+
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
+
+animation:fadeIn .25s ease;
+}
+
+/* ✨ ANIMACIÓN */
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(20px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+/* 🔤 INPUT */
+.input{
+width:100%;
+padding:14px;
+border-radius:12px;
+border:none;
+background:#1a252c;
+color:#fff;
+margin-top:10px;
+text-align:center;
+}
+
+/* 📋 RESULTADOS */
+#results{
+background:#1c272e;
+border-radius:12px;
+max-height:150px;
+overflow-y:auto;
+margin-top:5px;
+border:1px solid #2a3942;
+}
+
+#results div{
+padding:12px;
+border-bottom:1px solid #2a3942;
+cursor:pointer;
+transition:.2s;
+}
+#results div:hover{
+background:#00a88433;
+}
+
+/* 🔘 BOTONES */
+.btn{
+width:100%;
+padding:14px;
+margin-top:12px;
+border:none;
+border-radius:12px;
+font-weight:bold;
+cursor:pointer;
+transition:.25s;
+}
+
+.blue{
+background:linear-gradient(135deg,#00c6ff,#0072ff);
+color:#fff;
+}
+.blue:hover{transform:scale(1.03);}
+
+.green{
+background:linear-gradient(135deg,#25d366,#128c7e);
+color:#fff;
+}
+
+.red{
+background:linear-gradient(135deg,#ff5858,#ff2e2e);
+color:#fff;
+}
+
+/* 📷 IMG */
+#preview{
+width:100%;
+max-height:180px;
+display:none;
+margin-top:10px;
+border-radius:10px;
+border:2px solid #00a884;
+object-fit:contain;
+}
+
+/* ⏳ */
+#loading{
+display:none;
+margin:10px 0;
+color:#00d2ff;
+font-weight:bold;
+}
+
+/* 📱 MOBILE */
+@media(max-width:480px){
+#calendar{height:75vh;margin:5px;padding:5px;}
+.modal-content{padding:20px;border-radius:16px;}
+.btn{font-size:14px;padding:13px;}
+}
+
 </style>
 </head>
 
@@ -41,14 +166,14 @@ body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
 <div id="card" style="display:none">
 <p id="info-uf"></p>
 
-<img id="preview">
-
-<label style="display:block; padding:10px; border:2px dashed #444; cursor:pointer">
+<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;margin-top:10px">
 📷 Subir comprobante
 <input type="file" id="file-input" accept="image/*" style="display:none">
 </label>
 
-<div id="loading">Subiendo...</div>
+<img id="preview">
+
+<div id="loading">🚀 Subiendo...</div>
 
 <button id="btn-procesar" class="btn blue">GUARDAR</button>
 <a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
@@ -65,38 +190,37 @@ body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const config = {
-apiKey: "AIzaSyDx...",
-authDomain: "gestionuf-remoto.firebaseapp.com",
-projectId: "gestionuf-remoto"
-};
-
-const app = initializeApp(config);
-const db = getFirestore(app);
-
-const CLOUD_NAME = "dhryws88e";
-const UPLOAD_PRESET = "ml_default";
-const PHONE = "5491131552679";
-
-let dataUFs=[], reservas=[], selUF=null, fotoArchivo=null;
-
-// 🔥 FORMATO FECHA
-function formatFecha(fechaISO){
-const [y,m,d] = fechaISO.split("-");
+/* 🔥 FECHA */
+function formatFecha(f){
+const [y,m,d]=f.split("-");
 return `${d}-${m}-${y.slice(2)}`;
 }
 
-// Cargar UFs
-(async ()=>{
-const snap = await getDocs(collection(db,"departamentos"));
-dataUFs = snap.docs.map(d=>({
-UF:d.data().UF || d.data().Unidad,
-Inquilino:d.data().Inquilino || "Sin Nombre"
+/* FIREBASE */
+const app=initializeApp({
+apiKey:"AIzaSyDx...",
+authDomain:"gestionuf-remoto.firebaseapp.com",
+projectId:"gestionuf-remoto"
+});
+const db=getFirestore(app);
+
+const CLOUD_NAME="dhryws88e";
+const UPLOAD_PRESET="ml_default";
+const PHONE="5491131552679";
+
+let dataUFs=[],reservas=[],selUF=null,foto=null;
+
+/* CARGAR UFs */
+(async()=>{
+const snap=await getDocs(collection(db,"departamentos"));
+dataUFs=snap.docs.map(d=>({
+UF:d.data().UF||d.data().Unidad,
+Inquilino:d.data().Inquilino||"Sin Nombre"
 }));
 })();
 
-// Calendario
-const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
+/* CALENDAR */
+const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
 initialView:'dayGridMonth',
 locale:'es',
 dateClick:i=>abrir(i.dateStr),
@@ -104,139 +228,54 @@ eventClick:i=>abrir(i.event.startStr)
 });
 cal.render();
 
-// Listener
-onSnapshot(collection(db,"reservas_salon"), snap=>{
-reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
-cal.setOption('events', reservas.map(r=>({
-title:`UF ${r.uf} • ${r.fechaVisual || formatFecha(r.fecha)}`,
+/* REALTIME */
+onSnapshot(collection(db,"reservas_salon"),snap=>{
+reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
+cal.setOption('events',reservas.map(r=>({
+title:`UF ${r.uf} • ${r.fechaVisual||formatFecha(r.fecha)}`,
 start:r.fecha,
-backgroundColor:r.comprobanteUrl ? '#00a884' : '#e91e63'
+backgroundColor:r.comprobanteUrl?'#00a884':'#e91e63'
 })));
 });
 
-// Abrir modal
-window.abrir = (fecha)=>{
-selUF=null; fotoArchivo=null; window.fechaSel=fecha;
+/* ABRIR */
+window.abrir=(fecha)=>{
+window.fechaSel=fecha;
+selUF=null;
+foto=null;
 
 document.getElementById('modal').style.display="flex";
 document.getElementById('fecha-label').innerText=formatFecha(fecha);
 
-document.getElementById('card').style.display="none";
 document.getElementById('ui-search').style.display="block";
+document.getElementById('card').style.display="none";
 document.getElementById('btn-wa').style.display="none";
 
-const res = reservas.find(r=>r.fecha===fecha);
+const res=reservas.find(r=>r.fecha===fecha);
 
 if(res){
-window.modoReserva=false;
-window.idReserva=res.id;
-selUF={UF:res.uf, Inquilino:res.inquilino};
+window.modo=false;
+window.id=res.id;
+selUF={UF:res.uf,Inquilino:res.inquilino};
 
-document.getElementById('card').style.display="block";
 document.getElementById('ui-search').style.display="none";
+document.getElementById('card').style.display="block";
 document.getElementById('info-uf').innerText=`UF ${res.uf} - ${res.inquilino}`;
 }else{
-window.modoReserva=true;
+window.modo=true;
 }
 };
 
 window.cerrar=()=>document.getElementById('modal').style.display="none";
 
-// Imagen
-document.getElementById('file-input').onchange=(e)=>{
-const file=e.target.files[0];
-if(!file)return;
-
-fotoArchivo=file;
-
-const reader=new FileReader();
-reader.onload=(ev)=>{
-const preview=document.getElementById('preview');
-preview.src=ev.target.result;
-preview.style.display="block";
-};
-reader.readAsDataURL(file);
-};
-
-// Guardar
-document.getElementById('btn-procesar').onclick=async()=>{
-
-if(!selUF) return alert("Elegí UF");
-
-const btn=document.getElementById('btn-procesar');
-const load=document.getElementById('loading');
-
-btn.style.display="none";
-load.style.display="block";
-
-let urlFinal="";
-
-if(fotoArchivo){
-const fd=new FormData();
-fd.append("file",fotoArchivo);
-fd.append("upload_preset",UPLOAD_PRESET);
-
-try{
-const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
-method:"POST",
-body:fd
-});
-const d=await r.json();
-if(d.secure_url) urlFinal=d.secure_url;
-}catch(e){
-alert("Error subiendo imagen");
-}
-}
-
-try{
-
-const datos={
-fecha:window.fechaSel,
-fechaVisual:formatFecha(window.fechaSel),
-uf:selUF.UF,
-inquilino:selUF.Inquilino,
-comprobanteUrl:urlFinal
-};
-
-if(window.modoReserva){
-await addDoc(collection(db,"reservas_salon"),datos);
-}else{
-await updateDoc(doc(db,"reservas_salon",window.idReserva),{
-comprobanteUrl:urlFinal
-});
-}
-
-const fWA=formatFecha(window.fechaSel);
-
-const msj=`*RESERVA SUM*
-📅 ${fWA}
-🏠 UF ${selUF.UF}
-👤 ${selUF.Inquilino}
-${urlFinal ? `🔗 ${urlFinal}` : 'Sin comprobante'}`;
-
-document.getElementById('btn-wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
-document.getElementById('btn-wa').style.display="block";
-
-load.style.display="none";
-alert("Guardado OK");
-
-}catch(e){
-alert("Error Firebase");
-btn.style.display="block";
-load.style.display="none";
-}
-
-};
-
-// Buscador
-document.getElementById('search').oninput=(e)=>{
+/* BUSCADOR */
+document.getElementById('search').oninput=e=>{
 const v=e.target.value.toLowerCase();
 const cont=document.getElementById('results');
 cont.innerHTML="";
 if(!v)return;
 
-dataUFs
-.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
+dataUFs.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
 .slice(0,5)
 .forEach(u=>{
 const d=document.createElement('div');
@@ -251,7 +290,74 @@ cont.appendChild(d);
 });
 };
 
-</script>
+/* FOTO */
+document.getElementById('file-input').onchange=e=>{
+const f=e.target.files[0];
+if(!f)return;
+foto=f;
 
+const reader=new FileReader();
+reader.onload=ev=>{
+const p=document.getElementById('preview');
+p.src=ev.target.result;
+p.style.display="block";
+};
+reader.readAsDataURL(f);
+};
+
+/* GUARDAR */
+document.getElementById('btn-procesar').onclick=async()=>{
+
+if(!selUF) return alert("Elegí UF");
+
+const load=document.getElementById('loading');
+load.style.display="block";
+
+let url="";
+
+if(foto){
+const fd=new FormData();
+fd.append("file",foto);
+fd.append("upload_preset",UPLOAD_PRESET);
+
+try{
+const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{method:"POST",body:fd});
+const d=await r.json();
+if(d.secure_url) url=d.secure_url;
+}catch(e){alert("Error imagen");}
+}
+
+try{
+
+const datos={
+fecha:window.fechaSel,
+fechaVisual:formatFecha(window.fechaSel),
+uf:selUF.UF,
+inquilino:selUF.Inquilino,
+comprobanteUrl:url
+};
+
+if(window.modo){
+await addDoc(collection(db,"reservas_salon"),datos);
+}else{
+await updateDoc(doc(db,"reservas_salon",window.id),{comprobanteUrl:url});
+}
+
+const msg=`*RESERVA SUM*\n📅 ${formatFecha(window.fechaSel)}\n🏠 UF ${selUF.UF}\n👤 ${selUF.Inquilino}\n${url?"🔗 "+url:"Sin comprobante"}`;
+
+document.getElementById('btn-wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
+document.getElementById('btn-wa').style.display="block";
+
+load.style.display="none";
+alert("Guardado OK");
+
+}catch(e){
+alert("Error Firebase");
+load.style.display="none";
+}
+
+};
+
+</script>
 </body>
 </html>
