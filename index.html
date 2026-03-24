@@ -2,150 +2,118 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 <title>SUM PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
+*{box-sizing:border-box}
 
-/* 🌌 BASE */
 body{
-margin:0;
-font-family:-apple-system,sans-serif;
-background: radial-gradient(circle at top,#0f2027,#0b141a);
-color:#fff;
+    margin:0;
+    background:#0b141a;
+    color:#fff;
+    font-family:sans-serif;
+    height:100vh;
+    overflow:hidden;
 }
 
-/* 📅 CALENDARIO */
+/* CALENDARIO */
 #calendar{
-height:calc(100vh - 20px);
-margin:10px;
-background:#111b21;
-border-radius:15px;
-padding:10px;
+    background:#111b21;
+    border-radius:12px;
+    padding:10px;
+    height:85vh;
+    margin:10px;
+    border:1px solid #2a3942;
 }
 
-/* 🧊 MODAL */
+/* MODAL */
 .modal{
-position:fixed;
-inset:0;
-display:none;
-align-items:center;
-justify-content:center;
-background:rgba(0,0,0,.7);
-backdrop-filter:blur(10px);
-z-index:999999;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:99999;
+    padding:10px;
 }
 
-/* 🪟 CARD */
 .modal-content{
-width:95%;
-max-width:380px;
-padding:25px;
-border-radius:20px;
-
-background:rgba(28,39,46,0.7);
-backdrop-filter:blur(15px);
-
-border:1px solid rgba(255,255,255,0.08);
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
-
-animation:fadeIn .25s ease;
+    background:#1c272e;
+    width:100%;
+    max-width:420px;
+    border-radius:20px 20px 0 0;
+    padding:20px;
+    max-height:85vh;
+    overflow-y:auto;
+    animation:slideUp .25s ease;
 }
 
-/* ✨ ANIMACIÓN */
-@keyframes fadeIn{
-from{opacity:0; transform:translateY(20px);}
-to{opacity:1; transform:translateY(0);}
+@keyframes slideUp{
+    from{transform:translateY(40px);opacity:0}
+    to{transform:translateY(0);opacity:1}
 }
 
-/* 🔤 INPUT */
+/* INPUT */
 .input{
-width:100%;
-padding:14px;
-border-radius:12px;
-border:none;
-background:#1a252c;
-color:#fff;
-margin-top:10px;
-text-align:center;
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    background:#222;
+    color:#fff;
+    text-align:center;
+    font-size:16px;
 }
 
-/* 📋 RESULTADOS */
+/* BOTONES */
+.btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    margin-top:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.blue{background:#00a884;color:#fff}
+.green{background:#25d366;color:#fff}
+
+/* RESULTADOS */
 #results{
-background:#1c272e;
-border-radius:12px;
-max-height:150px;
-overflow-y:auto;
-margin-top:5px;
-border:1px solid #2a3942;
+    max-height:200px;
+    overflow-y:auto;
+    background:#222;
+    border-radius:10px;
+    margin-top:5px;
 }
 
 #results div{
-padding:12px;
-border-bottom:1px solid #2a3942;
-cursor:pointer;
-transition:.2s;
-}
-#results div:hover{
-background:#00a88433;
+    padding:12px;
+    border-bottom:1px solid #333;
 }
 
-/* 🔘 BOTONES */
-.btn{
-width:100%;
-padding:14px;
-margin-top:12px;
-border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-transition:.25s;
-}
-
-.blue{
-background:linear-gradient(135deg,#00c6ff,#0072ff);
-color:#fff;
-}
-.blue:hover{transform:scale(1.03);}
-
-.green{
-background:linear-gradient(135deg,#25d366,#128c7e);
-color:#fff;
-}
-
-.red{
-background:linear-gradient(135deg,#ff5858,#ff2e2e);
-color:#fff;
-}
-
-/* 📷 IMG */
+/* IMAGEN */
 #preview{
-width:100%;
-max-height:180px;
-display:none;
-margin-top:10px;
-border-radius:10px;
-border:2px solid #00a884;
-object-fit:contain;
+    width:100%;
+    max-height:200px;
+    display:none;
+    margin:10px 0;
+    border-radius:10px;
+    object-fit:contain;
+    border:2px solid #00a884;
+    background:#000;
 }
 
-/* ⏳ */
 #loading{
-display:none;
-margin:10px 0;
-color:#00d2ff;
-font-weight:bold;
+    display:none;
+    text-align:center;
+    margin:10px 0;
 }
-
-/* 📱 MOBILE */
-@media(max-width:480px){
-#calendar{height:75vh;margin:5px;padding:5px;}
-.modal-content{padding:20px;border-radius:16px;}
-.btn{font-size:14px;padding:13px;}
-}
-
 </style>
 </head>
 
@@ -164,19 +132,20 @@ font-weight:bold;
 </div>
 
 <div id="card" style="display:none">
+
 <p id="info-uf"></p>
 
-<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;margin-top:10px">
+<img id="preview">
+
+<label style="display:block;padding:15px;border:2px dashed #444;border-radius:10px;text-align:center;margin:10px 0">
 📷 Subir comprobante
 <input type="file" id="file-input" accept="image/*" style="display:none">
 </label>
 
-<img id="preview">
+<div id="loading">⌛ Subiendo...</div>
 
-<div id="loading">🚀 Subiendo...</div>
-
-<button id="btn-procesar" class="btn blue">GUARDAR</button>
-<a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
+<button id="btn-procesar" class="btn blue">Guardar</button>
+<a id="btn-wa" class="btn green" style="display:none" target="_blank">WhatsApp</a>
 
 </div>
 
@@ -190,19 +159,13 @@ font-weight:bold;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 FECHA */
-function formatFecha(f){
-const [y,m,d]=f.split("-");
-return `${d}-${m}-${y.slice(2)}`;
-}
-
-/* FIREBASE */
-const app=initializeApp({
-apiKey:"AIzaSyDx...",
-authDomain:"gestionuf-remoto.firebaseapp.com",
-projectId:"gestionuf-remoto"
+const app = initializeApp({
+    apiKey:"AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo",
+    authDomain:"gestionuf-remoto.firebaseapp.com",
+    projectId:"gestionuf-remoto"
 });
-const db=getFirestore(app);
+
+const db = getFirestore(app);
 
 const CLOUD_NAME="dhryws88e";
 const UPLOAD_PRESET="ml_default";
@@ -210,152 +173,134 @@ const PHONE="5491131552679";
 
 let dataUFs=[],reservas=[],selUF=null,foto=null;
 
+/* FORMATO FECHA */
+function formatear(fecha){
+    const [y,m,d]=fecha.split("-");
+    return `${d}-${m}-${y.slice(2)}`;
+}
+
 /* CARGAR UFs */
 (async()=>{
-const snap=await getDocs(collection(db,"departamentos"));
-dataUFs=snap.docs.map(d=>({
-UF:d.data().UF||d.data().Unidad,
-Inquilino:d.data().Inquilino||"Sin Nombre"
-}));
+    const snap=await getDocs(collection(db,"departamentos"));
+    dataUFs=snap.docs.map(d=>({
+        UF:d.data().UF || d.data().Unidad,
+        Inquilino:d.data().Inquilino || "Sin Nombre"
+    }));
 })();
 
-/* CALENDAR */
-const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
-initialView:'dayGridMonth',
-locale:'es',
-dateClick:i=>abrir(i.dateStr),
-eventClick:i=>abrir(i.event.startStr)
+/* CALENDARIO */
+const cal=new FullCalendar.Calendar(document.getElementById("calendar"),{
+    initialView:"dayGridMonth",
+    locale:"es",
+    dateClick:i=>abrir(i.dateStr),
+    eventClick:i=>abrir(i.event.startStr)
 });
 cal.render();
 
-/* REALTIME */
+/* LISTENER */
 onSnapshot(collection(db,"reservas_salon"),snap=>{
-reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
-cal.setOption('events',reservas.map(r=>({
-title:`UF ${r.uf} • ${r.fechaVisual||formatFecha(r.fecha)}`,
-start:r.fecha,
-backgroundColor:r.comprobanteUrl?'#00a884':'#e91e63'
-})));
+    reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    cal.setOption("events",reservas.map(r=>({
+        title:"UF "+r.uf,
+        start:r.fecha,
+        backgroundColor:r.comprobanteUrl ? "#00a884" : "#e91e63"
+    })));
 });
 
 /* ABRIR */
 window.abrir=(fecha)=>{
-window.fechaSel=fecha;
-selUF=null;
-foto=null;
+    selUF=null;
+    foto=null;
+    window.fechaSel=fecha;
 
-document.getElementById('modal').style.display="flex";
-document.getElementById('fecha-label').innerText=formatFecha(fecha);
-
-document.getElementById('ui-search').style.display="block";
-document.getElementById('card').style.display="none";
-document.getElementById('btn-wa').style.display="none";
-
-const res=reservas.find(r=>r.fecha===fecha);
-
-if(res){
-window.modo=false;
-window.id=res.id;
-selUF={UF:res.uf,Inquilino:res.inquilino};
-
-document.getElementById('ui-search').style.display="none";
-document.getElementById('card').style.display="block";
-document.getElementById('info-uf').innerText=`UF ${res.uf} - ${res.inquilino}`;
-}else{
-window.modo=true;
-}
+    document.getElementById("modal").style.display="flex";
+    document.getElementById("fecha-label").innerText=formatear(fecha);
+    document.getElementById("card").style.display="none";
+    document.getElementById("ui-search").style.display="block";
+    document.getElementById("btn-wa").style.display="none";
 };
 
-window.cerrar=()=>document.getElementById('modal').style.display="none";
+/* CERRAR */
+window.cerrar=()=>document.getElementById("modal").style.display="none";
 
 /* BUSCADOR */
-document.getElementById('search').oninput=e=>{
-const v=e.target.value.toLowerCase();
-const cont=document.getElementById('results');
-cont.innerHTML="";
-if(!v)return;
+search.oninput=e=>{
+    const v=e.target.value.toLowerCase();
+    results.innerHTML="";
+    if(!v)return;
 
-dataUFs.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
-.slice(0,5)
-.forEach(u=>{
-const d=document.createElement('div');
-d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
-d.onclick=()=>{
-selUF=u;
-document.getElementById('card').style.display="block";
-document.getElementById('info-uf').innerText=d.innerText;
-document.getElementById('ui-search').style.display="none";
-};
-cont.appendChild(d);
-});
+    dataUFs.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
+    .slice(0,5)
+    .forEach(u=>{
+        const d=document.createElement("div");
+        d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
+        d.onclick=()=>{
+            selUF=u;
+            card.style.display="block";
+            ui-search.style.display="none";
+            info-uf.innerText=d.innerText;
+        };
+        results.appendChild(d);
+    });
 };
 
-/* FOTO */
-document.getElementById('file-input').onchange=e=>{
-const f=e.target.files[0];
-if(!f)return;
-foto=f;
+/* IMAGEN */
+file-input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    foto=file;
 
-const reader=new FileReader();
-reader.onload=ev=>{
-const p=document.getElementById('preview');
-p.src=ev.target.result;
-p.style.display="block";
-};
-reader.readAsDataURL(f);
+    const reader=new FileReader();
+    reader.onload=x=>{
+        preview.src=x.target.result;
+        preview.style.display="block";
+    };
+    reader.readAsDataURL(file);
 };
 
 /* GUARDAR */
-document.getElementById('btn-procesar').onclick=async()=>{
+btn-procesar.onclick=async()=>{
+    if(!selUF)return alert("Elegí UF");
 
-if(!selUF) return alert("Elegí UF");
+    btn-procesar.style.display="none";
+    loading.style.display="block";
 
-const load=document.getElementById('loading');
-load.style.display="block";
+    let url="";
 
-let url="";
+    if(foto){
+        const fd=new FormData();
+        fd.append("file",foto);
+        fd.append("upload_preset",UPLOAD_PRESET);
 
-if(foto){
-const fd=new FormData();
-fd.append("file",foto);
-fd.append("upload_preset",UPLOAD_PRESET);
+        const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
+            method:"POST",
+            body:fd
+        });
 
-try{
-const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{method:"POST",body:fd});
-const d=await r.json();
-if(d.secure_url) url=d.secure_url;
-}catch(e){alert("Error imagen");}
-}
+        const d=await r.json();
+        if(d.secure_url) url=d.secure_url;
+    }
 
-try{
+    const payload={
+        fecha:window.fechaSel,
+        uf:selUF.UF,
+        inquilino:selUF.Inquilino,
+        comprobanteUrl:url
+    };
 
-const datos={
-fecha:window.fechaSel,
-fechaVisual:formatFecha(window.fechaSel),
-uf:selUF.UF,
-inquilino:selUF.Inquilino,
-comprobanteUrl:url
-};
+    await addDoc(collection(db,"reservas_salon"),payload);
 
-if(window.modo){
-await addDoc(collection(db,"reservas_salon"),datos);
-}else{
-await updateDoc(doc(db,"reservas_salon",window.id),{comprobanteUrl:url});
-}
+    const msg=`Reserva SUM
+📅 ${formatear(window.fechaSel)}
+UF ${selUF.UF}
+${selUF.Inquilino}
+${url}`;
 
-const msg=`*RESERVA SUM*\n📅 ${formatFecha(window.fechaSel)}\n🏠 UF ${selUF.UF}\n👤 ${selUF.Inquilino}\n${url?"🔗 "+url:"Sin comprobante"}`;
+    btn-wa.href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
+    btn-wa.style.display="block";
 
-document.getElementById('btn-wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
-document.getElementById('btn-wa').style.display="block";
-
-load.style.display="none";
-alert("Guardado OK");
-
-}catch(e){
-alert("Error Firebase");
-load.style.display="none";
-}
-
+    loading.style.display="none";
+    alert("Guardado OK");
 };
 
 </script>
