@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Gestión</title>
+    <title>SUM PRO - Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
@@ -18,8 +18,8 @@
         .green { background: #25d366; color: #fff; }
         #results { background: #222e35; border-radius: 10px; max-height: 120px; overflow-y: auto; margin-top: -5px; }
         #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
-        #preview { width: 100%; max-height: 150px; object-fit: contain; border-radius: 10px; margin: 10px 0; display: none; border: 1px solid #32444e; }
-        #loading { display: none; margin: 10px 0; color: #00d2ff; font-weight: bold; }
+        #preview { width: 100%; max-height: 150px; object-fit: contain; border-radius: 10px; margin: 10px 0; display: none; border: 1px solid #00a884; }
+        #loading { display: none; margin: 10px 0; color: #00d2ff; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -37,15 +37,18 @@
 
         <div id="card" style="display:none">
             <p id="info-uf" style="font-weight: bold; color: #00a884; font-size: 18px; margin: 10px 0;"></p>
-            <img id="preview">
+            
+            <img id="preview" src="">
+            
             <label for="file-input" style="display:block; padding:15px; border:2px dashed #00a884; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff; font-size: 13px;">
                 📷 <span id="file-text">SUBIR COMPROBANTE</span>
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
 
-            <div id="loading">🚀 SUBIENDO A LA NUBE...</div>
+            <div id="loading">🚀 SUBIENDO IMAGEN... POR FAVOR ESPERÁ</div>
+            
             <button id="btn-procesar" class="btn blue">GUARDAR DATOS</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank" rel="noopener noreferrer">ENVIAR WHATSAPP ✅</a>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
         </div>
         
         <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
@@ -90,6 +93,7 @@ window.abrir = (fecha) => {
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
     document.getElementById('preview').style.display = "none";
+    document.getElementById('preview').src = "";
     document.getElementById('btn-wa').style.display = "none";
     document.getElementById('btn-procesar').style.display = "flex";
     document.getElementById('file-input').value = "";
@@ -111,48 +115,22 @@ window.abrir = (fecha) => {
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// COMPRESIÓN CON "SAFE-MODE"
+// MANEJO DE IMAGEN
 document.getElementById('file-input').onchange = function(e) {
     const file = e.target.files;
     if (!file) return;
     
+    fotoBlob = file; // Guardamos el archivo original para asegurar que no se pierda
     const label = document.getElementById('file-text');
-    label.innerText = "⏳ PROCESANDO...";
+    const preview = document.getElementById('preview');
     
-    // Tiempo de espera para seguridad: si en 3 seg no achicó, usa la original
-    const timeout = setTimeout(() => {
-        if (!fotoBlob) {
-            fotoBlob = file;
-            label.innerText = "✅ LISTO (Original)";
-        }
-    }, 3000);
-
+    label.innerText = "⌛ CARGANDO...";
+    
     const reader = new FileReader();
     reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() {
-            try {
-                const canvas = document.createElement('canvas');
-                const max = 800;
-                let w = img.width, h = img.height;
-                if (w > h) { if (w > max) { h *= max / w; w = max; } }
-                else { if (h > max) { w *= max / h; h = max; } }
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                
-                canvas.toBlob((blob) => {
-                    clearTimeout(timeout);
-                    fotoBlob = blob;
-                    document.getElementById('preview').src = URL.createObjectURL(blob);
-                    document.getElementById('preview').style.display = "block";
-                    label.innerText = "✅ IMAGEN LISTA";
-                }, 'image/jpeg', 0.7);
-            } catch (err) { 
-                fotoBlob = file; 
-                label.innerText = "✅ LISTO";
-            }
-        };
-        img.src = event.target.result;
+        preview.src = event.target.result;
+        preview.style.display = "block";
+        label.innerText = "✅ IMAGEN CARGADA";
     };
     reader.readAsDataURL(file);
 };
@@ -175,40 +153,76 @@ document.getElementById('search').oninput = (e) => {
 };
 
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return;
-    document.getElementById('loading').style.display = "block";
-    document.getElementById('btn-procesar').style.display = "none";
+    if(!selUF) return alert("Error: No se seleccionó Unidad");
+    
+    const btn = document.getElementById('btn-procesar');
+    const load = document.getElementById('loading');
+    
+    btn.style.display = "none";
+    load.style.display = "block";
 
-    let url = "";
+    let urlFinal = "";
+
+    // SUBIDA A CLOUDINARY CON VALIDACIÓN FUERTE
     if(fotoBlob) {
         const fd = new FormData();
         fd.append("file", fotoBlob);
         fd.append("upload_preset", UPLOAD_PRESET);
+        
         try {
-            const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
-            const d = await r.json();
-            url = d.secure_url || "";
-        } catch(e) { console.error(e); }
+            const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: "POST",
+                body: fd
+            });
+            const data = await resp.json();
+            
+            if(data.secure_url) {
+                urlFinal = data.secure_url;
+            } else {
+                console.error("Cloudinary Error:", data);
+                alert("Ojo: La imagen no se subió (revisá el preset en Cloudinary)");
+            }
+        } catch(e) {
+            console.error("Fetch Error:", e);
+            alert("Error de conexión al subir la imagen");
+        }
     }
 
+    // GUARDAR EN FIREBASE
     try {
-        let msj = "";
+        let msjWhatsApp = "";
+        const datos = { 
+            fecha: window.fechaSel, 
+            uf: selUF.UF, 
+            inquilino: selUF.Inquilino, 
+            comprobanteUrl: urlFinal 
+        };
+
         if(modoReserva) {
-            await addDoc(collection(db,"reservas_salon"), { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url });
-            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
+            await addDoc(collection(db,"reservas_salon"), datos);
+            msjWhatsApp = `*NUEVA RESERVA SUM*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
-            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlFinal });
+            msjWhatsApp = `*PAGO SUM ACTUALIZADO*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
         }
 
+        // AGREGAR EL LINK SI EXISTE
+        if(urlFinal) {
+            msjWhatsApp += `\n🔗 *Comprobante:* ${urlFinal}`;
+        }
+
+        // MOSTRAR BOTÓN WHATSAPP
         const btnWA = document.getElementById('btn-wa');
-        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
+        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msjWhatsApp)}`;
         btnWA.style.display = "flex";
-        document.getElementById('loading').style.display = "none";
-        alert("✅ GUARDADO EXITOSO");
+        
+        load.style.display = "none";
+        alert("✅ PROCESO COMPLETADO");
+
     } catch(err) {
-        alert("Error: " + err.message);
-        document.getElementById('btn-procesar').style.display = "flex";
+        alert("Error al guardar en Firebase: " + err.message);
+        btn.style.display = "flex";
+        load.style.display = "none";
     }
 };
 </script>
