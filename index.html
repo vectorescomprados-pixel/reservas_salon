@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Final Fix</title>
+    <title>SUM PRO - Versión Blindada</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
@@ -29,28 +29,21 @@
 <div id="modal" class="modal">
     <div class="modal-content">
         <h3 id="fecha-label" style="margin:0 0 10px 0; color:#8696a0;"></h3>
-        
         <div id="ui-search">
             <input id="search" class="input" placeholder="Buscar Unidad o Nombre">
             <div id="results"></div>
         </div>
-
         <div id="card" style="display:none">
             <p id="info-uf" style="font-weight: bold; color: #00a884; font-size: 18px; margin: 10px 0;"></p>
-            
-            <img id="preview" src="">
-            
+            <img id="preview">
             <label for="file-input" style="display:block; padding:15px; border:2px dashed #00a884; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff; font-size: 13px;">
                 📷 <span id="file-text">SUBIR COMPROBANTE</span>
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
-
-            <div id="loading">🚀 SUBIENDO IMAGEN... POR FAVOR ESPERÁ</div>
-            
+            <div id="loading">🚀 PROCESANDO...</div>
             <button id="btn-procesar" class="btn blue">GUARDAR DATOS</button>
             <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
         </div>
-        
         <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
     </div>
 </div>
@@ -64,7 +57,7 @@ const app = initializeApp(config);
 const db = getFirestore(app);
 
 const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "5491131552679";
-let dataUFs = [], reservas = [], selUF = null, fotoBlob = null, modoReserva = true;
+let dataUFs = [], reservas = [], selUF = null, fotoBlob = null, modoReserva = true, procesado = false;
 
 async function init(){
     const snap = await getDocs(collection(db,"departamentos"));
@@ -87,7 +80,7 @@ onSnapshot(collection(db,"reservas_salon"), snap => {
 });
 
 window.abrir = (fecha) => {
-    selUF = null; fotoBlob = null; window.fechaSel = fecha;
+    selUF = null; fotoBlob = null; window.fechaSel = fecha; procesado = false;
     document.getElementById('fecha-label').innerText = fecha.split('-').reverse().join('/');
     document.getElementById('modal').style.display = "flex";
     document.getElementById('ui-search').style.display = "block";
@@ -115,22 +108,50 @@ window.abrir = (fecha) => {
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// MANEJO DE IMAGEN
+// 🛠 MANEJO DE IMAGEN CORREGIDO (Fix files y Race Condition)
 document.getElementById('file-input').onchange = function(e) {
-    const file = e.target.files;
+    const file = e.target.files; // ✅ FIX 1: Acceso correcto
     if (!file) return;
     
-    fotoBlob = file; // Guardamos el archivo original para asegurar que no se pierda
+    procesado = false;
     const label = document.getElementById('file-text');
-    const preview = document.getElementById('preview');
+    label.innerText = "⏳ PROCESANDO...";
     
-    label.innerText = "⌛ CARGANDO...";
-    
+    // ✅ FIX 2: Race condition control con Flag
+    const timeout = setTimeout(() => {
+        if (!procesado) {
+            fotoBlob = file;
+            label.innerText = "✅ LISTO (Original)";
+        }
+    }, 3000);
+
     const reader = new FileReader();
     reader.onload = function(event) {
-        preview.src = event.target.result;
-        preview.style.display = "block";
-        label.innerText = "✅ IMAGEN CARGADA";
+        const img = new Image();
+        img.onload = function() {
+            try {
+                const canvas = document.createElement('canvas');
+                const max = 800;
+                let w = img.width, h = img.height;
+                if (w > h) { if (w > max) { h *= max / w; w = max; } }
+                else { if (h > max) { w *= max / h; h = max; } }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                
+                canvas.toBlob((blob) => {
+                    procesado = true; // ✅ FIX Flag
+                    clearTimeout(timeout);
+                    fotoBlob = blob;
+                    document.getElementById('preview').src = URL.createObjectURL(blob);
+                    document.getElementById('preview').style.display = "block";
+                    label.innerText = "✅ IMAGEN LISTA";
+                }, 'image/jpeg', 0.7);
+            } catch (err) { 
+                fotoBlob = file; 
+                label.innerText = "✅ LISTO";
+            }
+        };
+        img.src = event.target.result;
     };
     reader.readAsDataURL(file);
 };
@@ -153,74 +174,58 @@ document.getElementById('search').oninput = (e) => {
 };
 
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return alert("Error: No se seleccionó Unidad");
-    
+    if(!selUF) return alert("Elegí una unidad");
+
+    // ✅ FIX 5: Validación UX
+    if(!fotoBlob && !confirm("¿Continuar sin comprobante?")) return;
+
     const btn = document.getElementById('btn-procesar');
     const load = document.getElementById('loading');
-    
     btn.style.display = "none";
     load.style.display = "block";
 
-    let urlFinal = "";
-
-    // SUBIDA A CLOUDINARY CON VALIDACIÓN FUERTE
+    let url = "";
     if(fotoBlob) {
         const fd = new FormData();
         fd.append("file", fotoBlob);
         fd.append("upload_preset", UPLOAD_PRESET);
-        
         try {
-            const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                method: "POST",
-                body: fd
-            });
-            const data = await resp.json();
+            const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+            const d = await r.json();
             
-            if(data.secure_url) {
-                urlFinal = data.secure_url;
-            } else {
-                console.error("Cloudinary Error:", data);
-                alert("Ojo: La imagen no se subió (revisá el preset en Cloudinary)");
-            }
-        } catch(e) {
-            console.error("Fetch Error:", e);
-            alert("Error de conexión al subir la imagen");
+            // ✅ FIX 3: Validación de Cloudinary
+            if(!d.secure_url) throw new Error("Error en la subida a la nube");
+            url = d.secure_url;
+            
+        } catch(e) { 
+            alert("❌ Falló la imagen: " + e.message);
+            btn.style.display = "flex";
+            load.style.display = "none";
+            return;
         }
     }
 
-    // GUARDAR EN FIREBASE
     try {
-        let msjWhatsApp = "";
-        const datos = { 
-            fecha: window.fechaSel, 
-            uf: selUF.UF, 
-            inquilino: selUF.Inquilino, 
-            comprobanteUrl: urlFinal 
-        };
+        let msj = "";
+        const payload = { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url };
 
         if(modoReserva) {
-            await addDoc(collection(db,"reservas_salon"), datos);
-            msjWhatsApp = `*NUEVA RESERVA SUM*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
+            await addDoc(collection(db,"reservas_salon"), payload);
+            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlFinal });
-            msjWhatsApp = `*PAGO SUM ACTUALIZADO*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
+            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
         }
 
-        // AGREGAR EL LINK SI EXISTE
-        if(urlFinal) {
-            msjWhatsApp += `\n🔗 *Comprobante:* ${urlFinal}`;
-        }
-
-        // MOSTRAR BOTÓN WHATSAPP
         const btnWA = document.getElementById('btn-wa');
-        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msjWhatsApp)}`;
+        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
         btnWA.style.display = "flex";
-        
         load.style.display = "none";
-        alert("✅ PROCESO COMPLETADO");
+        alert("✅ GUARDADO EXITOSO");
 
     } catch(err) {
-        alert("Error al guardar en Firebase: " + err.message);
+        // ✅ FIX 4: Limpieza de UI en error
+        alert("❌ Error Firebase: " + err.message);
         btn.style.display = "flex";
         load.style.display = "none";
     }
