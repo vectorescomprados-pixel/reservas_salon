@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUM PRO</title>
+<title>SUM PRO - Gestión</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
@@ -14,6 +14,7 @@ margin:0;
 font-family:-apple-system,sans-serif;
 background: radial-gradient(circle at top,#0f2027,#0b141a);
 color:#fff;
+overflow-x: hidden;
 }
 
 /* 📅 CALENDARIO */
@@ -32,21 +33,19 @@ inset:0;
 display:none;
 align-items:center;
 justify-content:center;
-background:rgba(0,0,0,.7);
+background:rgba(0,0,0,.85);
 backdrop-filter:blur(10px);
 z-index:999999;
 }
 
-/* 🪟 CARD */
 .modal-content{
-width:95%;
+width:90%;
 max-width:380px;
 padding:25px;
 border-radius:20px;
-background:rgba(28,39,46,0.7);
-backdrop-filter:blur(15px);
-border:1px solid rgba(255,255,255,0.08);
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
+background:rgba(28,39,46,0.9);
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 10px 50px rgba(0,0,0,1);
 animation:fadeIn .25s ease;
 }
 
@@ -55,20 +54,19 @@ from{opacity:0; transform:translateY(20px);}
 to{opacity:1; transform:translateY(0);}
 }
 
-/* 🔤 INPUT */
 .input{
 width:100%;
 padding:14px;
 border-radius:12px;
-border:none;
+border:1px solid #2a3942;
 background:#1a252c;
 color:#fff;
 margin-top:10px;
 text-align:center;
 box-sizing: border-box;
+outline: none;
 }
 
-/* 📋 RESULTADOS */
 #results{
 background:#1c272e;
 border-radius:12px;
@@ -82,44 +80,32 @@ border:1px solid #2a3942;
 padding:12px;
 border-bottom:1px solid #2a3942;
 cursor:pointer;
-transition:.2s;
-}
-#results div:hover{
-background:#00a88433;
 }
 
-/* 🔘 BOTONES */
 .btn{
 width:100%;
 padding:14px;
-margin-top:12px;
+margin-top:10px;
 border:none;
 border-radius:12px;
 font-weight:bold;
 cursor:pointer;
-transition:.25s;
+transition:.2s;
 display: block;
 text-align: center;
 text-decoration: none;
 box-sizing: border-box;
 }
 
-.blue{
-background:linear-gradient(135deg,#00c6ff,#0072ff);
-color:#fff;
-}
-.blue:hover{transform:scale(1.03);}
+.btn:active{transform: scale(0.98);}
 
-.green{
-background:linear-gradient(135deg,#25d366,#128c7e);
-color:#fff;
-}
+.blue{ background: linear-gradient(135deg,#00c6ff,#0072ff); color:#fff; }
+.green{ background: linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
+.red{ background: linear-gradient(135deg,#ff5858,#ff2e2e); color:#fff; }
+.gray{ background: #333; color:#bbb; }
 
-/* 📱 MOBILE */
 @media(max-width:480px){
-#calendar{height:75vh;margin:5px;padding:5px;}
-.modal-content{padding:20px;border-radius:16px;}
-.btn{font-size:14px;padding:13px;}
+#calendar{height:80vh;}
 }
 </style>
 </head>
@@ -130,32 +116,33 @@ color:#fff;
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="fecha-label" style="text-align: center;"></h3>
+        <h3 id="fecha-label" style="text-align: center; margin-top:0;"></h3>
 
         <div id="ui-search">
-            <input id="search" class="input" placeholder="Buscar UF o Inquilino">
+            <input id="search" class="input" placeholder="Buscar UF o Inquilino" autocomplete="off">
             <div id="results"></div>
+            <button id="btn-clear-test" class="btn red" style="display:none">BORRAR PRUEBAS</button>
         </div>
 
         <div id="card" style="display:none">
-            <p id="info-uf" style="text-align: center; font-size: 1.1em; font-weight: bold;"></p>
+            <p id="info-uf" style="text-align: center; font-size: 1.1em; background: #1a252c; padding: 10px; border-radius: 10px;"></p>
             
-            <button id="btn-procesar" class="btn blue">GUARDAR RESERVA</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR POR WHATSAPP</a>
+            <button id="btn-save" class="btn blue">GUARDAR RESERVA</button>
+            <button id="btn-delete" class="btn red" style="display:none">CANCELAR RESERVA</button>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank">NOTIFICAR POR WHATSAPP</a>
         </div>
 
-        <button class="btn" style="background:#444; color:white" onclick="cerrar()">Cerrar</button>
+        <button class="btn gray" onclick="cerrar()">Cerrar</button>
     </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, deleteDoc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 CONFIGURACIÓN */
-const PHONE = "5491131552679"; // Tu número guardado
+const PHONE = "5491131552679"; 
 const firebaseConfig = {
-    apiKey: "AIzaSyDx...", 
+    apiKey: "AIzaSyDx...", // Asegúrate de completar esto
     authDomain: "gestionuf-remoto.firebaseapp.com",
     projectId: "gestionuf-remoto"
 };
@@ -165,41 +152,50 @@ const db = getFirestore(app);
 
 let dataUFs = [], reservas = [], selUF = null;
 
-/* FORMATO FECHA */
-function formatFecha(f){
+const formatFecha = (f) => {
+    if(!f) return "";
     const [y,m,d] = f.split("-");
     return `${d}-${m}-${y.slice(2)}`;
-}
+};
 
-/* CARGAR DEPARTAMENTOS */
-(async()=>{
-    const snap = await getDocs(collection(db, "departamentos"));
-    dataUFs = snap.docs.map(d => ({
-        UF: d.data().UF || d.data().Unidad,
-        Inquilino: d.data().Inquilino || "Sin Nombre"
-    }));
-})();
+/* INICIO: CARGAR DATOS */
+const loadUFs = async () => {
+    try {
+        const snap = await getDocs(collection(db, "departamentos"));
+        dataUFs = snap.docs.map(d => ({
+            UF: d.data().UF || d.data().Unidad,
+            Inquilino: d.data().Inquilino || "Sin Nombre"
+        }));
+    } catch (e) { console.error("Error cargando UFs", e); }
+};
+loadUFs();
 
 /* CALENDARIO */
 const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
     locale: 'es',
+    firstDay: 1,
+    headerToolbar: { left: 'prev,next', center: 'title', right: '' },
     dateClick: i => abrir(i.dateStr),
-    eventClick: i => abrir(i.event.startStr)
+    eventClick: i => {
+        i.jsEvent.preventDefault();
+        abrir(i.event.startStr);
+    }
 });
 cal.render();
 
-/* REALTIME */
+/* ESCUCHA TIEMPO REAL */
 onSnapshot(collection(db, "reservas_salon"), snap => {
     reservas = snap.docs.map(d => ({id: d.id, ...d.data()}));
     cal.setOption('events', reservas.map(r => ({
         title: `UF ${r.uf}`,
         start: r.fecha,
-        backgroundColor: '#00a884'
+        backgroundColor: '#00a884',
+        allDay: true
     })));
 });
 
-/* ABRIR MODAL */
+/* MODAL CONTROL */
 window.abrir = (fecha) => {
     window.fechaSel = fecha;
     selUF = null;
@@ -209,33 +205,44 @@ window.abrir = (fecha) => {
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
     document.getElementById('btn-wa').style.display = "none";
+    document.getElementById('btn-delete').style.display = "none";
+    document.getElementById('btn-save').style.display = "block";
     document.getElementById('search').value = "";
+    document.getElementById('results').innerHTML = "";
+    document.getElementById('btn-clear-test').style.display = "none";
 
     const res = reservas.find(r => r.fecha === fecha);
     if(res) {
-        window.modo = false; // Editar
-        window.id = res.id;
+        window.modoEdit = true;
+        window.idDoc = res.id;
         selUF = {UF: res.uf, Inquilino: res.inquilino};
-        mostrarDetalleReserva();
+        showReservaInfo();
+        document.getElementById('btn-delete').style.display = "block";
+        document.getElementById('btn-save').innerText = "ACTUALIZAR DATOS";
     } else {
-        window.modo = true; // Nuevo
+        window.modoEdit = false;
+        document.getElementById('btn-save').innerText = "GUARDAR RESERVA";
     }
 };
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-function mostrarDetalleReserva() {
+const showReservaInfo = () => {
     document.getElementById('ui-search').style.display = "none";
     document.getElementById('card').style.display = "block";
     document.getElementById('info-uf').innerText = `UF ${selUF.UF} - ${selUF.Inquilino}`;
-}
+};
 
-/* BUSCADOR */
+/* BUSCADOR Y FUNCIÓN BORRAR */
 document.getElementById('search').oninput = e => {
-    const v = e.target.value.toLowerCase();
+    const v = e.target.value.toLowerCase().trim();
     const cont = document.getElementById('results');
+    const btnTest = document.getElementById('btn-clear-test');
+    
     cont.innerHTML = "";
-    if(!v) return;
+    btnTest.style.display = (v === "borrar") ? "block" : "none";
+
+    if(!v || v === "borrar") return;
 
     dataUFs.filter(u => u.Inquilino.toLowerCase().includes(v) || u.UF.toString().includes(v))
     .slice(0, 5)
@@ -244,42 +251,66 @@ document.getElementById('search').oninput = e => {
         d.innerText = `UF ${u.UF} - ${u.Inquilino}`;
         d.onclick = () => {
             selUF = u;
-            mostrarDetalleReserva();
+            showReservaInfo();
         };
         cont.appendChild(d);
     });
 };
 
-/* GUARDAR Y WHATSAPP */
-document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return alert("Por favor, selecciona una UF");
-
+/* ACCIÓN: GUARDAR */
+document.getElementById('btn-save').onclick = async () => {
+    if(!selUF) return;
     try {
         const datos = {
             fecha: window.fechaSel,
-            fechaVisual: formatFecha(window.fechaSel),
             uf: selUF.UF,
             inquilino: selUF.Inquilino
         };
 
-        if(window.modo) {
-            await addDoc(collection(db, "reservas_salon"), datos);
+        if(window.modoEdit) {
+            await updateDoc(doc(db, "reservas_salon", window.idDoc), datos);
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.id), datos);
+            await addDoc(collection(db, "reservas_salon"), datos);
         }
 
-        // Preparar mensaje de WhatsApp
-        const msg = `*RESERVA SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}`;
-        
-        document.getElementById('btn-wa').href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
-        document.getElementById('btn-wa').style.display = "block";
-        
-        alert("¡Reserva guardada correctamente!");
-    } catch(e) {
-        console.error(e);
-        alert("Error al conectar con la base de datos");
-    }
+        const msg = `*RESERVA SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n✅ Estado: CONFIRMADA`;
+        setWA(msg);
+        alert("¡Éxito!");
+    } catch(e) { alert("Error al guardar"); }
 };
+
+/* ACCIÓN: ELIMINAR */
+document.getElementById('btn-delete').onclick = async () => {
+    if(!confirm("¿Cancelar esta reserva?")) return;
+    try {
+        await deleteDoc(doc(db, "reservas_salon", window.idDoc));
+        const msg = `*CANCELACIÓN SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n❌ Estado: CANCELADA`;
+        setWA(msg);
+        document.getElementById('btn-delete').style.display = "none";
+        document.getElementById('btn-save').style.display = "none";
+        alert("Reserva Eliminada");
+    } catch(e) { alert("Error al eliminar"); }
+};
+
+/* ACCIÓN: LIMPIAR PRUEBAS */
+document.getElementById('btn-clear-test').onclick = async () => {
+    if(!confirm("¿BORRAR TODAS LAS RESERVAS DEL SISTEMA? Esta acción no se puede deshacer.")) return;
+    try {
+        const snap = await getDocs(collection(db, "reservas_salon"));
+        const batch = writeBatch(db);
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        alert("Sistema Limpio");
+        cerrar();
+    } catch(e) { alert("Error al limpiar"); }
+};
+
+function setWA(texto) {
+    const btn = document.getElementById('btn-wa');
+    btn.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(texto)}`;
+    btn.style.display = "block";
+}
+
 </script>
 </body>
 </html>
