@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 <title>SUM PRO FINAL</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -37,6 +37,7 @@ border-radius:15px;
 width:90%;
 max-width:360px;
 text-align:center;
+border: 1px solid #32444e;
 }
 
 .input{
@@ -62,6 +63,7 @@ font-weight:bold;
 
 .blue{background:#00a884;color:#fff}
 .green{background:#25d366;color:#fff}
+.red{background:#ff5252;color:#fff;font-size:12px;margin-top:20px}
 
 #results div{
 padding:10px;
@@ -99,14 +101,15 @@ font-weight:bold;
 <h3 id="fecha"></h3>
 
 <div id="searchUI">
-<input id="search" class="input" placeholder="Buscar UF o Inquilino">
+<input id="search" class="input" placeholder="Buscar UF o Inquilino" autocomplete="off">
 <div id="results"></div>
+<button id="btn-borrar-todo" class="btn red" style="display:none">🔥 BORRAR TODAS LAS RESERVAS</button>
 </div>
 
 <div id="card" style="display:none">
 <p id="info"></p>
 
-<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer">
+<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;color:#00d2ff">
 📷 Seleccionar comprobante
 <input type="file" id="file" accept="image/*" style="display:none">
 </label>
@@ -119,7 +122,7 @@ font-weight:bold;
 <a id="wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
 </div>
 
-<button class="btn" onclick="cerrar()">Cerrar</button>
+<button class="btn" style="background:transparent;color:#8696a0" onclick="cerrar()">Cerrar</button>
 
 </div>
 </div>
@@ -127,15 +130,12 @@ font-weight:bold;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 FORMATO FECHA */
-function formatearFecha(fechaISO){
-    const f = new Date(fechaISO);
-    const dia = String(f.getDate()).padStart(2,'0');
-    const mes = String(f.getMonth()+1).padStart(2,'0');
-    const anio = String(f.getFullYear()).slice(-2);
-    return `${dia}-${mes}-${anio}`;
+/* 🔥 FORMATO FECHA BLINDADO (Evita error de zona horaria) */
+function formatearFecha(fechaTexto){
+    const partes = fechaTexto.split('-');
+    return `${partes}-${partes}-${partes}`;
 }
 
 /* FIREBASE */
@@ -184,7 +184,7 @@ borderColor:'transparent'
 })));
 });
 
-/* ABRIR MODAL */
+/* ABRIR MODAL BLINDADO */
 window.abrir=(fecha)=>{
 fechaSel=fecha;
 selUF=null;
@@ -196,7 +196,11 @@ document.getElementById('fecha').innerText = formatearFecha(fecha);
 document.getElementById('searchUI').style.display="block";
 document.getElementById('card').style.display="none";
 document.getElementById('preview').style.display="none";
+document.getElementById('preview').src="";
 document.getElementById('wa').style.display="none";
+document.getElementById('search').value="";
+document.getElementById('results').innerHTML="";
+document.getElementById('btn-borrar-todo').style.display="none";
 
 const res=reservas.find(r=>r.fecha===fecha);
 
@@ -218,11 +222,21 @@ window.cerrar=()=>{
 document.getElementById('modal').style.display="none";
 };
 
-/* BUSCADOR */
+/* BUSCADOR + COMANDO BORRAR */
 document.getElementById('search').oninput=e=>{
 const v=e.target.value.toLowerCase();
 const cont=document.getElementById('results');
+const btnBorrar = document.getElementById('btn-borrar-todo');
 cont.innerHTML="";
+
+// Si escribe "borrar" muestra el botón secreto
+if(v === "borrar") {
+    btnBorrar.style.display = "block";
+    return;
+} else {
+    btnBorrar.style.display = "none";
+}
+
 if(!v) return;
 
 dataUFs
@@ -243,7 +257,7 @@ cont.appendChild(d);
 
 /* FOTO */
 document.getElementById('file').onchange=e=>{
-const file=e.target.files[0];
+const file=e.target.files;
 if(!file) return;
 
 fotoArchivo=file;
@@ -259,18 +273,14 @@ document.getElementById('guardar').onclick=async()=>{
 if(!selUF) return alert("Elegí una UF");
 
 const load=document.getElementById('loading');
+const btnG = document.getElementById('guardar');
 load.style.display="block";
+btnG.disabled = true;
 
 let url="";
 
 /* CLOUDINARY */
 if(fotoArchivo){
-
-if(!(fotoArchivo instanceof File)){
-alert("Archivo inválido");
-return;
-}
-
 const fd=new FormData();
 fd.append("file",fotoArchivo);
 fd.append("upload_preset",UPLOAD_PRESET);
@@ -280,26 +290,18 @@ const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
 method:"POST",
 body:fd
 });
-
 const d=await r.json();
-
-if(!d.secure_url){
-console.error(d);
-throw new Error("Cloudinary falló");
-}
-
-url=d.secure_url;
-
+if(d.secure_url) url=d.secure_url;
 }catch(e){
 alert("❌ Error subiendo imagen");
 load.style.display="none";
+btnG.disabled = false;
 return;
 }
 }
 
 /* FIREBASE */
 try{
-
 if(modoReserva){
 await addDoc(collection(db,"reservas_salon"),{
 fecha:fechaSel,
@@ -313,20 +315,35 @@ comprobanteUrl:url
 });
 }
 
-/* WHATSAPP */
 const msj=`*RESERVA SUM*\n📅 ${formatearFecha(fechaSel)}\n🏠 UF ${selUF.UF}\n👤 ${selUF.Inquilino}\n${url?"🔗 "+url:"❌ Sin comprobante"}`;
 
 document.getElementById('wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
 document.getElementById('wa').style.display="block";
 
 load.style.display="none";
+btnG.disabled = false;
 alert("✅ Guardado correcto");
 
 }catch(e){
 alert("Error Firebase: "+e.message);
 load.style.display="none";
+btnG.disabled = false;
 }
+};
 
+/* ACCIÓN DE BORRADO MASIVO */
+document.getElementById('btn-borrar-todo').onclick = async () => {
+    if(!confirm("¿Seguro que quieres borrar TODAS las reservas del sistema?")) return;
+    try {
+        const snap = await getDocs(collection(db, "reservas_salon"));
+        for (const docRef of snap.docs) {
+            await deleteDoc(doc(db, "reservas_salon", docRef.id));
+        }
+        alert("🔥 Base de datos de reservas limpia.");
+        location.reload();
+    } catch(e) {
+        alert("Error al borrar: " + e.message);
+    }
 };
 
 </script>
