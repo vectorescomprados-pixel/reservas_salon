@@ -3,35 +3,50 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
-    <title>SUM PRO</title>
+    <title>SUM PRO - Gestión</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+
     <style>
         * { box-sizing: border-box; }
         :root { --bg: #0b141a; --card: #1c272e; --blue: #1d6ed7; --red: #e91e63; --green: #25d366; --text: #e9edef; --border: #2a3942; }
         body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; }
+        
         .app-bar { background: #111b21; padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; }
         .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; text-transform: uppercase; }
+        
         .container { width: 100%; padding: 10px; }
-        #calendar { background: #111b21; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
-        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 25px; border-radius: 28px; text-align: center; position: relative; border: 1px solid #32444e; }
-        .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; margin: 10px 0; text-align: center; }
-        .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 12px; border-radius: 12px; border: 1px dashed var(--blue); cursor: pointer; margin: 10px 0; font-size: 14px; font-weight: bold; }
-        .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
+        #calendar { background: #111b21; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; padding: 10px; }
+        
+        /* Estilo Números Calendario */
+        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; padding: 5px !important; }
+        .fc-col-header-cell-cushion { color: #8696a0 !important; text-transform: uppercase; font-size: 11px; }
+
+        /* Modales */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(8px); }
+        .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 25px; border-radius: 28px; text-align: center; position: relative; border: 1px solid #32444e; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        /* Inputs y Botones */
+        .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; margin: 10px 0; text-align: center; font-size: 16px; }
+        .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--blue); cursor: pointer; margin: 15px 0; font-size: 14px; font-weight: bold; transition: 0.3s; }
+        .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; font-size: 14px; }
         .btn-blue { background: var(--blue); color: white; }
-        .btn-red { background: var(--red); color: white; }
-        .btn-ghost { background: transparent; color: #8696a0; border: 1px solid #32444e; }
-        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .results-list { background: #111b21; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; border: 1px solid var(--border); }
-        .result-item { padding: 15px; border-bottom: 1px solid #2a3942; text-align: left; color: white; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-red { background: #3d1c24; color: var(--red); border: 1px solid var(--red); }
+        .btn-ghost { background: transparent; color: #8696a0; margin-top: 15px; }
+
+        /* Lista de resultados búsqueda */
+        .results-list { background: #111b21; border-radius: 12px; max-height: 180px; overflow-y: auto; margin-top: 5px; border: 1px solid var(--border); }
+        .result-item { padding: 15px; border-bottom: 1px solid #2a3942; text-align: left; color: white; font-size: 14px; }
+        
+        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; z-index: 100; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #22c55e; font-size: 10px; font-weight: bold;">● SEGURIDAD ACTIVA</div>
+    <div style="color: #25d366; font-size: 10px; font-weight: bold; letter-spacing: 1px;">● SISTEMA DE RESERVAS V2</div>
     <h1>SUM PRO</h1>
 </div>
 
@@ -41,26 +56,35 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading-overlay">⏳ Comprimiendo y subiendo...<br>No cierre la ventana</div>
-        <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px; font-weight: 800;"></h3>
+        <div id="loading-overlay">
+            <div style="margin-bottom:10px">⏳</div>
+            PROCESANDO IMAGEN...<br>
+            <span style="font-size:10px; font-weight:normal">Comprimiendo para ahorrar datos</span>
+        </div>
+
+        <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 22px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
             <input type="text" id="search-input" class="input-styled" placeholder="Buscar Unidad o Apellido...">
             <div id="results" class="results-list" style="display:none"></div>
-            
-            <div id="selection-card" style="display:none; margin: 10px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 12px; border: 1px solid var(--blue);">
-                <span id="label-uf" style="font-weight: 900; color: #fff; display: block; margin-bottom: 10px;"></span>
-                <label for="file-upload" class="file-label" id="file-status">📷 SUBIR COMPROBANTE</label>
-                <input type="file" id="file-upload" accept="image/*" style="display:none">
-                <button class="btn btn-blue" id="btn-confirm">Confirmar Reserva</button>
-            </div>
         </div>
 
         <div id="ui-ocupado" style="display:none">
-            <div style="margin: 20px 0; padding:20px; background: rgba(233,30,99,0.05); border-radius:15px; border: 1px solid #443339;">
-                <span id="info-reserva" style="font-size:18px; font-weight: 800; color: #fff;"></span>
+            <div style="margin: 10px 0; padding:20px; background: rgba(233,30,99,0.1); border-radius:15px; border: 1px solid var(--red);">
+                <span id="info-reserva" style="font-size:16px; font-weight: 800; color: #fff;"></span>
+                <div id="status-pago" style="font-size:12px; margin-top:5px"></div>
             </div>
-            <button class="btn btn-red" onclick="abrirSeguridad()">Eliminar Reserva</button>
+            <button class="btn btn-red" onclick="abrirSeguridad()" style="margin-bottom: 10px;">Eliminar Reserva</button>
+        </div>
+
+        <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 15px; border: 1px solid var(--blue);">
+            <span id="label-uf" style="font-weight: 900; color: #fff; display: block; margin-bottom: 10px;"></span>
+            
+            <label for="file-upload" class="file-label" id="file-status">📷 TOCAR PARA SUBIR FOTO</label>
+            <input type="file" id="file-upload" accept="image/*" style="display:none">
+            
+            <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Nueva Reserva</button>
+            <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
         </div>
 
         <button class="btn btn-ghost" onclick="closeM()">Volver</button>
@@ -70,6 +94,7 @@
 <div id="modal-seguridad" class="modal">
     <div class="modal-content">
         <h2 style="margin:0; color:#fff; font-size: 20px; font-weight: 700;">Seguridad</h2>
+        <p style="font-size:12px; color:#8696a0">Ingresa la clave para borrar</p>
         <input type="password" id="admin-pass" class="input-styled" placeholder="Clave Administrativa">
         <button class="btn btn-blue" id="btn-autorizar">AUTORIZAR BORRADO</button>
         <button class="btn btn-ghost" onclick="cerrarSeguridad()">CANCELAR</button>
@@ -78,12 +103,14 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // CONFIGURACIÓN
     const CLOUD_NAME = "dhryws88e";
     const UPLOAD_PRESET = "ml_default"; 
+    const MASTER_KEY = "1131552679"; // Tu número/clave
 
-    const config = { 
+    const firebaseConfig = { 
         apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
         authDomain: "gestionuf-remoto.firebaseapp.com", 
         projectId: "gestionuf-remoto", 
@@ -92,9 +119,8 @@
         appId: "1:724452752860:web:4d25585addcdcbd146e319" 
     };
 
-    const app = initializeApp(config);
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const MASTER_KEY = "1131552679"; 
     const formatFechaLegible = (f) => f ? f.split('-').reverse().join('-') : "";
 
     let dataUFs = []; let reservas = []; let selUF = null;
@@ -112,24 +138,31 @@
     const fileStatus = document.getElementById('file-status');
     const loading = document.getElementById('loading-overlay');
 
+    // Cambiar color del botón de cámara cuando hay foto
     fileInput.addEventListener('change', (e) => {
         if(e.target.files.length > 0) {
-            fileStatus.innerText = "✅ COMPROBANTE LISTO";
-            fileStatus.style.color = "#25d366";
-            fileStatus.style.borderColor = "#25d366";
+            fileStatus.innerText = "✅ IMAGEN CARGADA";
+            fileStatus.style.color = "var(--green)";
+            fileStatus.style.borderColor = "var(--green)";
         }
     });
 
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth', locale: 'es', height: 'auto',
         headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-        dateClick: (info) => abrir(info.dateStr)
+        dateClick: (info) => abrir(info.dateStr),
+        eventClick: (info) => abrir(info.event.startStr) // PERMITE CLIC EN LA ETIQUETA ROJA
     });
     calendar.render();
 
     onSnapshot(collection(db, "reservas_salon"), (s) => {
         reservas = s.docs.map(d => ({id: d.id, ...d.data()}));
-        calendar.setOption('events', reservas.map(r => ({ title: `UF ${r.uf}`, start: r.fecha, backgroundColor: '#e91e63', borderColor: '#e91e63' })));
+        calendar.setOption('events', reservas.map(r => ({ 
+            title: `UF ${r.uf}`, 
+            start: r.fecha, 
+            backgroundColor: r.pago === 'Pagado' ? '#1d6ed7' : '#e91e63', 
+            borderColor: 'transparent' 
+        })));
     });
 
     function abrir(fecha) {
@@ -137,68 +170,89 @@
         document.getElementById('m-date').innerText = formatFechaLegible(fecha);
         document.getElementById('search-input').value = ''; 
         fileInput.value = '';
-        fileStatus.innerText = "📷 SUBIR COMPROBANTE";
+        fileStatus.innerText = "📷 TOCAR PARA SUBIR FOTO";
         fileStatus.style.color = "#00d2ff";
-        document.getElementById('selection-card').style.display = 'none';
+        fileStatus.style.borderColor = "var(--blue)";
+        
         const res = reservas.find(r => r.fecha === fecha);
+        
         if(res) {
+            // FECHA OCUPADA
             window.currentResId = res.id;
             window.currentResInfo = res;
+            selUF = { uf: res.uf, inquilino: res.inquilino };
+            
             document.getElementById('ui-crear').style.display = 'none';
             document.getElementById('ui-ocupado').style.display = 'block';
-            document.getElementById('info-reserva').innerText = `RESERVADO: UF ${res.uf} - ${res.inquilino}`;
+            document.getElementById('info-reserva').innerText = `UF ${res.uf} - ${res.inquilino}`;
+            document.getElementById('status-pago').innerText = res.pago === 'Pagado' ? '✅ PAGO REGISTRADO' : '⚠️ PAGO PENDIENTE';
+            
+            // Mostrar opción de agregar comprobante aunque ya esté reservado
+            document.getElementById('selection-card').style.display = 'block';
+            document.getElementById('label-uf').innerText = "ACTUALIZAR COMPROBANTE";
+            document.getElementById('btn-confirm').style.display = 'none';
+            document.getElementById('btn-update-pago').style.display = 'block';
         } else {
+            // FECHA LIBRE
             document.getElementById('ui-crear').style.display = 'block';
             document.getElementById('ui-ocupado').style.display = 'none';
+            document.getElementById('selection-card').style.display = 'none';
+            document.getElementById('btn-confirm').style.display = 'block';
+            document.getElementById('btn-update-pago').style.display = 'none';
+            selUF = null;
         }
         document.getElementById('modal').style.display = 'flex';
     }
 
+    // FUNCIÓN PARA SUBIR Y COMPRIMIR
+    async function subirACloudinary(file) {
+        const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1024, useWebWorker: true };
+        const compressedFile = await imageCompression(file, options);
+        const formData = new FormData();
+        formData.append('file', compressedFile);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+        return data.secure_url;
+    }
+
+    // BOTÓN: CONFIRMAR NUEVA RESERVA
     document.getElementById('btn-confirm').onclick = async () => {
         if(!selUF) return;
         let fotoUrl = "";
-
         if(fileInput.files) {
             loading.style.display = "flex";
-            const imageFile = fileInput.files;
-            
-            // OPCIONES DE COMPRESIÓN
-            const options = {
-                maxSizeMB: 1,          // Máximo 1MB
-                maxWidthOrHeight: 1024, // Máximo 1024px
-                useWebWorker: true
-            }
-
-            try {
-                // COMPRIMIR ANTES DE SUBIR
-                const compressedFile = await imageCompression(imageFile, options);
-                
-                const formData = new FormData();
-                formData.append('file', compressedFile);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-                const data = await res.json();
-                fotoUrl = data.secure_url;
-            } catch(e) { 
-                console.error(e);
-                alert("Error al procesar la imagen"); 
-            }
+            fotoUrl = await subirACloudinary(fileInput.files);
         }
 
         await addDoc(collection(db, "reservas_salon"), { 
             fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
-            tel: selUF.tel, comprobanteUrl: fotoUrl, pago: fotoUrl ? "Pagado" : "Pendiente"
+            comprobanteUrl: fotoUrl || "", pago: fotoUrl ? "Pagado" : "Pendiente"
         });
 
-        let msg = `*RESERVA SUM PRO*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`;
+        let msg = `*NUEVA RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}%0AInquilino: ${selUF.inquilino}`;
         if(fotoUrl) msg += `%0A%0A✅ *Comprobante:* ${fotoUrl}`;
-        else msg += `%0A%0A⚠️ *Pago Pendiente.*`;
+        else msg += `%0A%0A⚠️ *Pago Pendiente*`;
 
         window.open(`https://wa.me/549${MASTER_KEY}?text=${msg}`);
         closeM();
     };
 
+    // BOTÓN: ACTUALIZAR PAGO (Para fechas ya reservadas)
+    document.getElementById('btn-update-pago').onclick = async () => {
+        if(!fileInput.files) { alert("Selecciona una foto primero"); return; }
+        loading.style.display = "flex";
+        try {
+            const fotoUrl = await subirACloudinary(fileInput.files);
+            await updateDoc(doc(db, "reservas_salon", window.currentResId), { 
+                comprobanteUrl: fotoUrl, pago: "Pagado" 
+            });
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*COMPROBANTE RECIBIDO*%0AUF: ${selUF.uf}%0AFecha: ${formatFechaLegible(window.selectedDate)}%0ALink: ${fotoUrl}`);
+            closeM();
+        } catch(e) { alert("Error"); loading.style.display="none"; }
+    };
+
+    // BÚSQUEDA DE UF
     document.getElementById('search-input').addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
         const resultsDiv = document.getElementById('results');
@@ -212,7 +266,7 @@
             d.onclick = () => {
                 selUF = item;
                 document.getElementById('selection-card').style.display = 'block';
-                document.getElementById('label-uf').innerText = `UF ${item.uf} | ${item.inquilino}`;
+                document.getElementById('label-uf').innerText = `SELECCIONADO: UF ${item.uf}`;
                 resultsDiv.style.display = 'none';
             };
             resultsDiv.appendChild(d);
@@ -225,10 +279,11 @@
     document.getElementById('btn-autorizar').onclick = async () => {
         if(document.getElementById('admin-pass').value === MASTER_KEY) {
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA CANCELADA*%0AUF: ${selUF.uf}`);
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA ELIMINADA*%0AUF: ${selUF.uf}%0AFecha: ${formatFechaLegible(window.selectedDate)}`);
             cerrarSeguridad(); closeM();
         } else { alert("Clave incorrecta"); }
     };
+
     window.closeM = () => { document.getElementById('modal').style.display = 'none'; loading.style.display = "none"; }
     init();
 </script>
