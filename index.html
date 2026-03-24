@@ -2,92 +2,25 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SUM PRO FINAL</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b141a;color:#fff;font-family:sans-serif}
+body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
+#calendar { height:85vh; margin:10px; background:#111b21; border-radius:12px; padding:10px; }
 
-#calendar{
-margin:10px;
-height:85vh;
-background:#111b21;
-border-radius:12px;
-padding:10px;
-border:1px solid #2a3942;
-}
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:99999; }
+.modal-content { background:#1c272e; padding:20px; border-radius:20px; width:90%; max-width:360px; text-align:center; }
 
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.95);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:999999;
-}
+.input { width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #333; background:#222; color:#fff; text-align:center; }
+.btn { width:100%; padding:12px; border:none; border-radius:10px; margin-top:10px; font-weight:bold; cursor:pointer; }
+.blue { background:#00a884; color:#fff; }
+.green { background:#25d366; color:#fff; }
 
-.modal-content{
-background:#1c272e;
-padding:20px;
-border-radius:15px;
-width:90%;
-max-width:360px;
-text-align:center;
-border: 1px solid #32444e;
-}
-
-.input{
-width:100%;
-padding:12px;
-margin:10px 0;
-border-radius:10px;
-border:none;
-background:#222;
-color:#fff;
-text-align:center;
-}
-
-.btn{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.blue{background:#00a884;color:#fff}
-.green{background:#25d366;color:#fff}
-.red{background:#ff5252;color:#fff;font-size:12px;margin-top:20px}
-
-#results div{
-padding:10px;
-border-bottom:1px solid #333;
-cursor:pointer;
-text-align:left;
-}
-
-#preview{
-width:100%;
-max-height:200px;
-display:none;
-margin-top:10px;
-border-radius:10px;
-border:2px solid #00a884;
-object-fit:contain;
-}
-
-#loading{
-display:none;
-margin:10px 0;
-color:#00d2ff;
-font-weight:bold;
-}
+#preview { width:100%; max-height:200px; display:none; margin:10px 0; border-radius:10px; }
+#loading { display:none; color:#00d2ff; margin:10px 0; }
 </style>
 </head>
 
@@ -98,31 +31,31 @@ font-weight:bold;
 <div id="modal" class="modal">
 <div class="modal-content">
 
-<h3 id="fecha"></h3>
+<h3 id="fecha-label"></h3>
 
-<div id="searchUI">
-<input id="search" class="input" placeholder="Buscar UF o Inquilino" autocomplete="off">
+<div id="ui-search">
+<input id="search" class="input" placeholder="Buscar UF o Inquilino">
 <div id="results"></div>
-<button id="btn-borrar-todo" class="btn red" style="display:none">🔥 BORRAR TODAS LAS RESERVAS</button>
 </div>
 
 <div id="card" style="display:none">
-<p id="info"></p>
-
-<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;color:#00d2ff">
-📷 Seleccionar comprobante
-<input type="file" id="file" accept="image/*" style="display:none">
-</label>
+<p id="info-uf"></p>
 
 <img id="preview">
 
-<div id="loading">🚀 Subiendo...</div>
+<label style="display:block; padding:10px; border:2px dashed #444; cursor:pointer">
+📷 Subir comprobante
+<input type="file" id="file-input" accept="image/*" style="display:none">
+</label>
 
-<button id="guardar" class="btn blue">GUARDAR</button>
-<a id="wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
+<div id="loading">Subiendo...</div>
+
+<button id="btn-procesar" class="btn blue">GUARDAR</button>
+<a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
+
 </div>
 
-<button class="btn" style="background:transparent;color:#8696a0" onclick="cerrar()">Cerrar</button>
+<button class="btn" onclick="cerrar()">Cerrar</button>
 
 </div>
 </div>
@@ -130,33 +63,31 @@ font-weight:bold;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 FORMATO FECHA BLINDADO (Evita error de zona horaria) */
-function formatearFecha(fechaTexto){
-    const partes = fechaTexto.split('-');
-    return `${partes}-${partes}-${partes}`;
-}
+const config = {
+apiKey: "AIzaSyDx...",
+authDomain: "gestionuf-remoto.firebaseapp.com",
+projectId: "gestionuf-remoto"
+};
 
-/* FIREBASE */
-const app = initializeApp({
-apiKey:"AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo",
-authDomain:"gestionuf-remoto.firebaseapp.com",
-projectId:"gestionuf-remoto"
-});
+const app = initializeApp(config);
 const db = getFirestore(app);
 
-/* CONFIG */
-const CLOUD_NAME="dhryws88e";
-const UPLOAD_PRESET="ml_default";
-const PHONE="5491131552679";
+const CLOUD_NAME = "dhryws88e";
+const UPLOAD_PRESET = "ml_default";
+const PHONE = "5491131552679";
 
-/* STATE */
 let dataUFs=[], reservas=[], selUF=null, fotoArchivo=null;
-let fechaSel="", modoReserva=true, idReserva=null;
 
-/* CARGAR UFs */
-(async()=>{
+// 🔥 FORMATO FECHA
+function formatFecha(fechaISO){
+const [y,m,d] = fechaISO.split("-");
+return `${d}-${m}-${y.slice(2)}`;
+}
+
+// Cargar UFs
+(async ()=>{
 const snap = await getDocs(collection(db,"departamentos"));
 dataUFs = snap.docs.map(d=>({
 UF:d.data().UF || d.data().Unidad,
@@ -164,8 +95,8 @@ Inquilino:d.data().Inquilino || "Sin Nombre"
 }));
 })();
 
-/* CALENDARIO */
-const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
+// Calendario
+const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
 initialView:'dayGridMonth',
 locale:'es',
 dateClick:i=>abrir(i.dateStr),
@@ -173,113 +104,73 @@ eventClick:i=>abrir(i.event.startStr)
 });
 cal.render();
 
-/* REALTIME */
+// Listener
 onSnapshot(collection(db,"reservas_salon"), snap=>{
 reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
 cal.setOption('events', reservas.map(r=>({
-title:"UF "+r.uf,
+title:`UF ${r.uf} • ${r.fechaVisual || formatFecha(r.fecha)}`,
 start:r.fecha,
-backgroundColor:r.comprobanteUrl?'#00a884':'#e91e63',
-borderColor:'transparent'
+backgroundColor:r.comprobanteUrl ? '#00a884' : '#e91e63'
 })));
 });
 
-/* ABRIR MODAL BLINDADO */
-window.abrir=(fecha)=>{
-fechaSel=fecha;
-selUF=null;
-fotoArchivo=null;
+// Abrir modal
+window.abrir = (fecha)=>{
+selUF=null; fotoArchivo=null; window.fechaSel=fecha;
 
 document.getElementById('modal').style.display="flex";
-document.getElementById('fecha').innerText = formatearFecha(fecha);
+document.getElementById('fecha-label').innerText=formatFecha(fecha);
 
-document.getElementById('searchUI').style.display="block";
 document.getElementById('card').style.display="none";
-document.getElementById('preview').style.display="none";
-document.getElementById('preview').src="";
-document.getElementById('wa').style.display="none";
-document.getElementById('search').value="";
-document.getElementById('results').innerHTML="";
-document.getElementById('btn-borrar-todo').style.display="none";
+document.getElementById('ui-search').style.display="block";
+document.getElementById('btn-wa').style.display="none";
 
-const res=reservas.find(r=>r.fecha===fecha);
+const res = reservas.find(r=>r.fecha===fecha);
 
 if(res){
-modoReserva=false;
-idReserva=res.id;
+window.modoReserva=false;
+window.idReserva=res.id;
 selUF={UF:res.uf, Inquilino:res.inquilino};
 
-document.getElementById('searchUI').style.display="none";
 document.getElementById('card').style.display="block";
-document.getElementById('info').innerText=`UF ${res.uf} - ${res.inquilino}`;
+document.getElementById('ui-search').style.display="none";
+document.getElementById('info-uf').innerText=`UF ${res.uf} - ${res.inquilino}`;
 }else{
-modoReserva=true;
+window.modoReserva=true;
 }
 };
 
-/* CERRAR */
-window.cerrar=()=>{
-document.getElementById('modal').style.display="none";
-};
+window.cerrar=()=>document.getElementById('modal').style.display="none";
 
-/* BUSCADOR + COMANDO BORRAR */
-document.getElementById('search').oninput=e=>{
-const v=e.target.value.toLowerCase();
-const cont=document.getElementById('results');
-const btnBorrar = document.getElementById('btn-borrar-todo');
-cont.innerHTML="";
-
-// Si escribe "borrar" muestra el botón secreto
-if(v === "borrar") {
-    btnBorrar.style.display = "block";
-    return;
-} else {
-    btnBorrar.style.display = "none";
-}
-
-if(!v) return;
-
-dataUFs
-.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
-.slice(0,5)
-.forEach(u=>{
-const d=document.createElement('div');
-d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
-d.onclick=()=>{
-selUF=u;
-document.getElementById('card').style.display="block";
-document.getElementById('info').innerText=d.innerText;
-document.getElementById('searchUI').style.display="none";
-};
-cont.appendChild(d);
-});
-};
-
-/* FOTO */
-document.getElementById('file').onchange=e=>{
-const file=e.target.files;
-if(!file) return;
+// Imagen
+document.getElementById('file-input').onchange=(e)=>{
+const file=e.target.files[0];
+if(!file)return;
 
 fotoArchivo=file;
 
+const reader=new FileReader();
+reader.onload=(ev)=>{
 const preview=document.getElementById('preview');
-preview.src=URL.createObjectURL(file);
+preview.src=ev.target.result;
 preview.style.display="block";
 };
+reader.readAsDataURL(file);
+};
 
-/* GUARDAR */
-document.getElementById('guardar').onclick=async()=>{
+// Guardar
+document.getElementById('btn-procesar').onclick=async()=>{
 
-if(!selUF) return alert("Elegí una UF");
+if(!selUF) return alert("Elegí UF");
 
+const btn=document.getElementById('btn-procesar');
 const load=document.getElementById('loading');
-const btnG = document.getElementById('guardar');
+
+btn.style.display="none";
 load.style.display="block";
-btnG.disabled = true;
 
-let url="";
+let urlFinal="";
 
-/* CLOUDINARY */
 if(fotoArchivo){
 const fd=new FormData();
 fd.append("file",fotoArchivo);
@@ -291,61 +182,76 @@ method:"POST",
 body:fd
 });
 const d=await r.json();
-if(d.secure_url) url=d.secure_url;
+if(d.secure_url) urlFinal=d.secure_url;
 }catch(e){
-alert("❌ Error subiendo imagen");
-load.style.display="none";
-btnG.disabled = false;
-return;
+alert("Error subiendo imagen");
 }
 }
 
-/* FIREBASE */
 try{
-if(modoReserva){
-await addDoc(collection(db,"reservas_salon"),{
-fecha:fechaSel,
+
+const datos={
+fecha:window.fechaSel,
+fechaVisual:formatFecha(window.fechaSel),
 uf:selUF.UF,
 inquilino:selUF.Inquilino,
-comprobanteUrl:url
-});
-}else{
-await updateDoc(doc(db,"reservas_salon",idReserva),{
-comprobanteUrl:url
-});
-}
-
-const msj=`*RESERVA SUM*\n📅 ${formatearFecha(fechaSel)}\n🏠 UF ${selUF.UF}\n👤 ${selUF.Inquilino}\n${url?"🔗 "+url:"❌ Sin comprobante"}`;
-
-document.getElementById('wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
-document.getElementById('wa').style.display="block";
-
-load.style.display="none";
-btnG.disabled = false;
-alert("✅ Guardado correcto");
-
-}catch(e){
-alert("Error Firebase: "+e.message);
-load.style.display="none";
-btnG.disabled = false;
-}
+comprobanteUrl:urlFinal
 };
 
-/* ACCIÓN DE BORRADO MASIVO */
-document.getElementById('btn-borrar-todo').onclick = async () => {
-    if(!confirm("¿Seguro que quieres borrar TODAS las reservas del sistema?")) return;
-    try {
-        const snap = await getDocs(collection(db, "reservas_salon"));
-        for (const docRef of snap.docs) {
-            await deleteDoc(doc(db, "reservas_salon", docRef.id));
-        }
-        alert("🔥 Base de datos de reservas limpia.");
-        location.reload();
-    } catch(e) {
-        alert("Error al borrar: " + e.message);
-    }
+if(window.modoReserva){
+await addDoc(collection(db,"reservas_salon"),datos);
+}else{
+await updateDoc(doc(db,"reservas_salon",window.idReserva),{
+comprobanteUrl:urlFinal
+});
+}
+
+const fWA=formatFecha(window.fechaSel);
+
+const msj=`*RESERVA SUM*
+📅 ${fWA}
+🏠 UF ${selUF.UF}
+👤 ${selUF.Inquilino}
+${urlFinal ? `🔗 ${urlFinal}` : 'Sin comprobante'}`;
+
+document.getElementById('btn-wa').href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
+document.getElementById('btn-wa').style.display="block";
+
+load.style.display="none";
+alert("Guardado OK");
+
+}catch(e){
+alert("Error Firebase");
+btn.style.display="block";
+load.style.display="none";
+}
+
+};
+
+// Buscador
+document.getElementById('search').oninput=(e)=>{
+const v=e.target.value.toLowerCase();
+const cont=document.getElementById('results');
+cont.innerHTML="";
+if(!v)return;
+
+dataUFs
+.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
+.slice(0,5)
+.forEach(u=>{
+const d=document.createElement('div');
+d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
+d.onclick=()=>{
+selUF=u;
+document.getElementById('card').style.display="block";
+document.getElementById('info-uf').innerText=d.innerText;
+document.getElementById('ui-search').style.display="none";
+};
+cont.appendChild(d);
+});
 };
 
 </script>
+
 </body>
 </html>
