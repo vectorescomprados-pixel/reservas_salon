@@ -1,274 +1,402 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SUM PRO</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SUM PRO</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b141a">
+  <!-- FullCalendar JS + CSS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
-
-body{
-    background:#0b141a;
-    color:#fff;
-}
-
-/* CALENDARIO */
-#calendar{
-    height:100vh;
-    padding:10px;
-}
-
-/* MODAL FIX REAL */
-.modal{
-    position:fixed;
-    top:0;left:0;
-    width:100%;
-    height:100%;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,.7);
-    z-index:9999;
-}
-
-/* CONTENEDOR */
-.modal-box{
-    width:95%;
-    max-width:400px;
-    background:#121b22;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 10px 40px rgba(0,0,0,.8);
-}
-
-/* INPUT */
-.input{
-    width:100%;
-    padding:14px;
-    border-radius:12px;
-    border:none;
-    background:#1f2c33;
-    color:#fff;
-    margin:10px 0;
-}
-
-/* BOTONES */
-.btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    margin-top:10px;
-    font-weight:bold;
-}
-
-.blue{background:#00a884}
-.green{background:#25d366}
-.red{background:#ff4444}
-
-/* RESULTADOS */
-#results div{
-    padding:10px;
-    border-bottom:1px solid #333;
-}
-
-/* IMAGEN */
-#preview{
-    width:100%;
-    max-height:200px;
-    margin-top:10px;
-    border-radius:10px;
-    display:none;
-}
-
-/* LOADER */
-#loading{
-    display:none;
-    text-align:center;
-    margin-top:10px;
-}
-
-/* MOBILE FIX */
-@media (max-height:600px){
-    .modal-box{
-        max-height:90vh;
-        overflow:auto;
+  <style>
+    /* 🌌 BASE */
+    body{
+      margin:0;
+      font-family:-apple-system,sans-serif;
+      background: radial-gradient(circle at top,#0f2027,#0b141a);
+      color:#fff;
     }
-}
-</style>
+
+    /* 📅 CALENDARIO */
+    #calendar{
+      height:calc(100vh - 20px);
+      margin:10px;
+      background:#111b21;
+      border-radius:15px;
+      padding:10px;
+    }
+
+    /* 🧊 MODAL */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.7);
+      backdrop-filter:blur(10px);
+      z-index:999999;
+    }
+
+    /* 🪟 CARD */
+    .modal-content{
+      width:95%;
+      max-width:380px;
+      padding:25px;
+      border-radius:20px;
+
+      background:rgba(28,39,46,0.7);
+      backdrop-filter:blur(15px);
+
+      border:1px solid rgba(255,255,255,0.08);
+      box-shadow:0 10px 40px rgba(0,0,0,0.6);
+
+      animation:fadeIn .25s ease;
+
+      /* ✅ Responsive: evita que la foto rompa el modal */
+      max-height:90vh;
+      overflow:auto;
+    }
+
+    /* ✨ ANIMACIÓN */
+    @keyframes fadeIn{
+      from{opacity:0; transform:translateY(20px);}
+      to{opacity:1; transform:translateY(0);}
+    }
+
+    /* 🔤 INPUT */
+    .input{
+      width:100%;
+      padding:14px;
+      border-radius:12px;
+      border:none;
+      background:#1a252c;
+      color:#fff;
+      margin-top:10px;
+      text-align:center;
+      box-sizing:border-box;
+    }
+
+    /* 📋 RESULTADOS */
+    #results{
+      background:#1c272e;
+      border-radius:12px;
+      max-height:150px;
+      overflow-y:auto;
+      margin-top:5px;
+      border:1px solid #2a3942;
+    }
+
+    #results div{
+      padding:12px;
+      border-bottom:1px solid #2a3942;
+      cursor:pointer;
+      transition:.2s;
+    }
+    #results div:hover{
+      background:#00a88433;
+    }
+
+    /* 🔘 BOTONES */
+    .btn{
+      width:100%;
+      padding:14px;
+      margin-top:12px;
+      border:none;
+      border-radius:12px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:.25s;
+      box-sizing:border-box;
+    }
+
+    .blue{
+      background:linear-gradient(135deg,#00c6ff,#0072ff);
+      color:#fff;
+    }
+    .blue:hover{transform:scale(1.03);}
+
+    .green{
+      background:linear-gradient(135deg,#25d366,#128c7e);
+      color:#fff;
+    }
+
+    .red{
+      background:linear-gradient(135deg,#ff5858,#ff2e2e);
+      color:#fff;
+    }
+
+    /* 📷 IMG (✅ más responsive) */
+    #preview{
+      width:100%;
+      height:auto;
+      max-height:40vh; /* se adapta a la pantalla */
+      display:none;
+      margin-top:10px;
+      border-radius:10px;
+      border:2px solid #00a884;
+      object-fit:contain;
+    }
+
+    /* ⏳ */
+    #loading{
+      display:none;
+      margin:10px 0;
+      color:#00d2ff;
+      font-weight:bold;
+    }
+
+    /* 📱 MOBILE */
+    @media(max-width:480px){
+      #calendar{height:75vh;margin:5px;padding:5px;}
+      .modal-content{padding:20px;border-radius:16px;}
+      .btn{font-size:14px;padding:13px;}
+    }
+  </style>
 </head>
 
 <body>
+  <div id="calendar"></div>
 
-<div id="calendar"></div>
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3 id="fecha-label"></h3>
 
-<!-- MODAL -->
-<div id="modal" class="modal">
-    <div class="modal-box">
+      <div id="ui-search">
+        <input id="search" class="input" placeholder="Buscar UF o Inquilino">
+        <div id="results"></div>
 
-        <h3 id="fecha"></h3>
+        <!-- ✅ Botón aparece solo si escribís "borrar" -->
+        <button id="btn-borrar-pruebas" class="btn red" style="display:none">
+          BORRAR PRUEBAS
+        </button>
+      </div>
 
-        <div id="searchBox">
-            <input id="search" class="input" placeholder="Buscar UF o Inquilino">
-            <div id="results"></div>
-            <button id="btnDelete" class="btn red" style="display:none">BORRAR PRUEBAS</button>
+      <div id="card" style="display:none">
+        <p id="info-uf"></p>
+
+        <!-- ✅ Switch PRUEBA (se puede ocultar/mostrar con el buscador) -->
+        <div id="wrap-prueba" style="margin-top:10px;padding:12px;border:1px solid #2a3942;border-radius:12px;background:#1a252c;">
+          <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">
+            <span>Marcar como PRUEBA</span>
+            <input type="checkbox" id="switch-prueba" style="transform:scale(1.2);">
+          </label>
+          <small style="display:block;opacity:.75;margin-top:6px;">
+            Las PRUEBAS se pueden borrar luego escribiendo “borrar”.
+          </small>
         </div>
 
-        <div id="card" style="display:none">
-            <p id="info"></p>
+        <label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;margin-top:10px">
+          📷 Subir comprobante
+          <input type="file" id="file-input" accept="image/*" style="display:none">
+        </label>
 
-            <input type="file" id="file">
-            <img id="preview">
+        <img id="preview">
 
-            <div id="loading">Subiendo...</div>
+        <div id="loading">Subiendo...</div>
 
-            <button id="guardar" class="btn blue">Guardar</button>
-            <a id="wa" class="btn green" target="_blank" style="display:none">Enviar WhatsApp</a>
-        </div>
+        <button id="btn-procesar" class="btn blue">GUARDAR</button>
+        <a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
+      </div>
 
-        <button class="btn" onclick="cerrar()">Cerrar</button>
-
+      <button class="btn" onclick="cerrar()">Cerrar</button>
     </div>
-</div>
+  </div>
 
-<script type="module">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      getDocs,
+      doc,
+      updateDoc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    /* 🔥 FECHA */
+    function formatFecha(f){
+      const [y,m,d]=f.split("-");
+      return `${d}-${m}-${y.slice(2)}`;
+    }
 
-/* CONFIG */
-const app = initializeApp({
- apiKey:"AIzaSyDx...",
- authDomain:"gestionuf-remoto.firebaseapp.com",
- projectId:"gestionuf-remoto"
-});
+    /* ✅ Compresión de imagen (reduce tamaño real subido a Cloudinary) */
+    async function compressImage(file, {
+      maxSize = 1600,
+      quality = 0.75,
+      mimeType = "image/jpeg"
+    } = {}) {
+      try{
+        const bitmap = await createImageBitmap(file);
 
-const db = getFirestore(app);
+        let { width, height } = bitmap;
 
-const CLOUD="dhryws88e";
-const PRESET="ml_default";
+        // Si ya es chica, no tocar
+        if (width <= maxSize && height <= maxSize) return file;
 
-let UFs=[], reservas=[], sel=null, file=null;
+        const scale = Math.min(maxSize / width, maxSize / height);
+        const newW = Math.round(width * scale);
+        const newH = Math.round(height * scale);
 
-/* CARGA UFs */
-const snap = await getDocs(collection(db,"departamentos"));
-UFs = snap.docs.map(d=>d.data());
+        const canvas = document.createElement("canvas");
+        canvas.width = newW;
+        canvas.height = newH;
 
-/* CALENDARIO */
-const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
- initialView:'dayGridMonth',
- locale:'es',
- dateClick:e=>abrir(e.dateStr)
-});
-cal.render();
+        const ctx = canvas.getContext("2d", { alpha: false });
+        ctx.drawImage(bitmap, 0, 0, newW, newH);
 
-/* REALTIME */
-onSnapshot(collection(db,"reservas_salon"), snap=>{
- reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
- cal.setOption('events', reservas.map(r=>({
-  title:"UF "+r.uf,
-  start:r.fecha
- })));
-});
+        const blob = await new Promise((resolve) => {
+          canvas.toBlob((b) => resolve(b), mimeType, quality);
+        });
 
-/* ABRIR */
-window.abrir = (f)=>{
- document.getElementById("modal").style.display="flex";
- document.getElementById("fecha").innerText=f;
- document.getElementById("searchBox").style.display="block";
- document.getElementById("card").style.display="none";
-};
+        return blob || file;
+      }catch(err){
+        // Fallback: si el dispositivo/navegador falla, sube la original
+        console.warn("Compresión no disponible, se sube original:", err);
+        return file;
+      }
+    }
 
-/* CERRAR */
-window.cerrar = ()=>{
- document.getElementById("modal").style.display="none";
-};
+    /* FIREBASE */
+    const app = initializeApp({
+      apiKey:"AIzaSyDx...",          // <- tu config real
+      authDomain:"gestionuf-remoto.firebaseapp.com",
+      projectId:"gestionuf-remoto"
+    });
+    const db = getFirestore(app);
 
-/* BUSCAR */
-search.oninput=(e)=>{
- let v=e.target.value.toLowerCase();
- results.innerHTML="";
+    /* CLOUDINARY */
+    const CLOUD_NAME="dhryws88e";
+    const UPLOAD_PRESET="ml_default";
+    const PHONE="5491131552679";
 
- document.getElementById("btnDelete").style.display = (v==="borrar")?"block":"none";
+    let dataUFs=[], reservas=[], selUF=null, foto=null;
+    let switchPruebaVisible = true;
 
- if(!v || v==="borrar") return;
+    // UI refs
+    const modal = document.getElementById("modal");
+    const fechaLabel = document.getElementById("fecha-label");
+    const uiSearch = document.getElementById("ui-search");
+    const searchInput = document.getElementById("search");
+    const results = document.getElementById("results");
 
- UFs.filter(u=>u.Inquilino.toLowerCase().includes(v))
- .slice(0,5)
- .forEach(u=>{
-   let d=document.createElement("div");
-   d.innerText=u.Inquilino;
-   d.onclick=()=>{
-     sel=u;
-     searchBox.style.display="none";
-     card.style.display="block";
-     info.innerText=u.Inquilino;
-   };
-   results.appendChild(d);
- });
-};
+    const btnBorrarPruebas = document.getElementById("btn-borrar-pruebas");
 
-/* PREVIEW */
-file.onchange=(e)=>{
- file=e.target.files[0];
- preview.src=URL.createObjectURL(file);
- preview.style.display="block";
-};
+    const card = document.getElementById("card");
+    const infoUf = document.getElementById("info-uf");
 
-/* GUARDAR */
-guardar.onclick=async()=>{
- if(!sel) return alert("Elegí UF");
+    const wrapPrueba = document.getElementById("wrap-prueba");
+    const switchPrueba = document.getElementById("switch-prueba");
 
- loading.style.display="block";
+    const fileInput = document.getElementById("file-input");
+    const preview = document.getElementById("preview");
+    const loading = document.getElementById("loading");
 
- let url="";
+    const btnProcesar = document.getElementById("btn-procesar");
+    const btnWa = document.getElementById("btn-wa");
 
- if(file){
-  const fd=new FormData();
-  fd.append("file", file);
-  fd.append("upload_preset", PRESET);
+    /* CARGAR UFs */
+    (async()=>{
+      const snap = await getDocs(collection(db,"departamentos"));
+      dataUFs = snap.docs.map(d=>({
+        UF: d.data().UF || d.data().Unidad,
+        Inquilino: d.data().Inquilino || "Sin Nombre"
+      }));
+    })();
 
-  const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{
-   method:"POST", body:fd
-  });
-  const d=await r.json();
-  url=d.secure_url||"";
- }
+    /* CALENDAR */
+    const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
+      initialView:'dayGridMonth',
+      locale:'es',
+      dateClick:i=>abrir(i.dateStr),
+      eventClick:i=>abrir(i.event.startStr)
+    });
+    cal.render();
 
- await addDoc(collection(db,"reservas_salon"),{
-  fecha:fecha.innerText,
-  uf:sel.UF,
-  inquilino:sel.Inquilino,
-  comprobanteUrl:url
- });
+    /* REALTIME */
+    onSnapshot(collection(db,"reservas_salon"), snap=>{
+      reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
+      cal.setOption('events', reservas.map(r=>({
+        title:`UF ${r.uf} • ${r.fechaVisual||formatFecha(r.fecha)}`,
+        start:r.fecha,
+        backgroundColor:r.comprobanteUrl ? '#00a884' : '#e91e63'
+      })));
+    });
 
- loading.style.display="none";
+    function esDocDePrueba(r){
+      const uf = (r.uf ?? "").toString().toLowerCase();
+      const inq = (r.inquilino ?? "").toString().toLowerCase();
+      return r.esPrueba === true || uf.includes("test") || uf.includes("prueba") || inq.includes("test") || inq.includes("prueba");
+    }
 
- wa.href=`https://wa.me/?text=Reserva ${sel.Inquilino}`;
- wa.style.display="block";
-};
+    /* ABRIR */
+    window.abrir = (fecha)=>{
+      window.fechaSel=fecha;
+      selUF=null;
+      foto=null;
 
-/* BORRAR TODO 🔥 */
-btnDelete.onclick=async()=>{
- if(!confirm("Borrar TODO?")) return;
+      modal.style.display="flex";
+      fechaLabel.innerText=formatFecha(fecha);
 
- const snap = await getDocs(collection(db,"reservas_salon"));
- for(const d of snap.docs){
-   await deleteDoc(doc(db,"reservas_salon",d.id));
- }
+      uiSearch.style.display="block";
+      card.style.display="none";
+      btnWa.style.display="none";
+      btnBorrarPruebas.style.display="none";
 
- alert("Firebase limpio");
+      // ✅ Reset visual de foto (evita que quede pegada la anterior)
+      preview.src = "";
+      preview.style.display = "none";
+      fileInput.value = "";
 
- // ⚠️ Cloudinary requiere backend para borrar real
-};
+      const res = reservas.find(r=>r.fecha===fecha);
 
-</script>
+      if(res){
+        window.modo=false;
+        window.id=res.id;
+        selUF={UF:res.uf,Inquilino:res.inquilino};
 
-</body>
-</html>
+        uiSearch.style.display="none";
+        card.style.display="block";
+        infoUf.innerText=`UF ${res.uf} - ${res.inquilino}`;
+
+        // Switch: mostrar estado, pero bloquear edición (tu update no lo cambia)
+        wrapPrueba.style.display = switchPruebaVisible ? "block" : "none";
+        switchPrueba.checked = !!res.esPrueba;
+        switchPrueba.disabled = true;
+      }else{
+        window.modo=true;
+
+        // En alta nueva: habilitado
+        wrapPrueba.style.display = switchPruebaVisible ? "block" : "none";
+        switchPrueba.checked = false;
+        switchPrueba.disabled = false;
+      }
+    };
+
+    window.cerrar = ()=> modal.style.display="none";
+
+    /* BUSCADOR + COMANDOS */
+    searchInput.oninput = e=>{
+      const v = e.target.value.trim().toLowerCase();
+      results.innerHTML="";
+
+      // Comando: borrar
+      if(v === "borrar"){
+        btnBorrarPruebas.style.display = "block";
+        return;
+      }else{
+        btnBorrarPruebas.style.display = "none";
+      }
+
+      // Comando: ocultar switch
+      if(v === "ocultar"){
+        switchPruebaVisible = false;
+        wrapPrueba.style.display = "none";
+        return;
+      }
+
+      // Comando: mostrar switch
+      if(v === "
