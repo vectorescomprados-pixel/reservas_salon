@@ -95,6 +95,7 @@ body{
 #results div{
     padding:12px;
     border-bottom:1px solid #333;
+    cursor:pointer;
 }
 
 /* IMAGEN */
@@ -114,6 +115,10 @@ body{
     text-align:center;
     margin:10px 0;
 }
+
+/* 🔥 FIX BLOQUE VACÍO */
+#card{display:none}
+#card:empty{display:none!important}
 </style>
 </head>
 
@@ -131,8 +136,7 @@ body{
 <div id="results"></div>
 </div>
 
-<div id="card" style="display:none">
-
+<div id="card">
 <p id="info-uf"></p>
 
 <img id="preview">
@@ -146,7 +150,6 @@ body{
 
 <button id="btn-procesar" class="btn blue">Guardar</button>
 <a id="btn-wa" class="btn green" style="display:none" target="_blank">WhatsApp</a>
-
 </div>
 
 <button class="btn" onclick="cerrar()">Cerrar</button>
@@ -157,7 +160,7 @@ body{
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp({
     apiKey:"AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo",
@@ -173,13 +176,13 @@ const PHONE="5491131552679";
 
 let dataUFs=[],reservas=[],selUF=null,foto=null;
 
-/* FORMATO FECHA */
-function formatear(fecha){
-    const [y,m,d]=fecha.split("-");
+/* FECHA */
+function formatear(f){
+    const [y,m,d]=f.split("-");
     return `${d}-${m}-${y.slice(2)}`;
 }
 
-/* CARGAR UFs */
+/* CARGA */
 (async()=>{
     const snap=await getDocs(collection(db,"departamentos"));
     dataUFs=snap.docs.map(d=>({
@@ -189,7 +192,7 @@ function formatear(fecha){
 })();
 
 /* CALENDARIO */
-const cal=new FullCalendar.Calendar(document.getElementById("calendar"),{
+const cal=new FullCalendar.Calendar(calendar,{
     initialView:"dayGridMonth",
     locale:"es",
     dateClick:i=>abrir(i.dateStr),
@@ -197,7 +200,7 @@ const cal=new FullCalendar.Calendar(document.getElementById("calendar"),{
 });
 cal.render();
 
-/* LISTENER */
+/* RESERVAS */
 onSnapshot(collection(db,"reservas_salon"),snap=>{
     reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
     cal.setOption("events",reservas.map(r=>({
@@ -213,15 +216,20 @@ window.abrir=(fecha)=>{
     foto=null;
     window.fechaSel=fecha;
 
-    document.getElementById("modal").style.display="flex";
-    document.getElementById("fecha-label").innerText=formatear(fecha);
-    document.getElementById("card").style.display="none";
-    document.getElementById("ui-search").style.display="block";
-    document.getElementById("btn-wa").style.display="none";
+    modal.style.display="flex";
+    fecha-label.innerText=formatear(fecha);
+
+    // 🔥 RESET TOTAL
+    card.style.display="none";
+    ui-search.style.display="block";
+    btn-wa.style.display="none";
+    preview.style.display="none";
+    preview.src="";
+    search.value="";
 };
 
 /* CERRAR */
-window.cerrar=()=>document.getElementById("modal").style.display="none";
+window.cerrar=()=>modal.style.display="none";
 
 /* BUSCADOR */
 search.oninput=e=>{
@@ -281,14 +289,12 @@ btn-procesar.onclick=async()=>{
         if(d.secure_url) url=d.secure_url;
     }
 
-    const payload={
+    await addDoc(collection(db,"reservas_salon"),{
         fecha:window.fechaSel,
         uf:selUF.UF,
         inquilino:selUF.Inquilino,
         comprobanteUrl:url
-    };
-
-    await addDoc(collection(db,"reservas_salon"),payload);
+    });
 
     const msg=`Reserva SUM
 📅 ${formatear(window.fechaSel)}
