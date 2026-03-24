@@ -3,35 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUM PRO - Producción Final</title>
+<title>SUM PRO - FINAL</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
 * { box-sizing: border-box; }
-body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
-.container { padding:10px; }
-#calendar { background:#111b21; border-radius:12px; padding:10px; height:85vh; }
 
-.modal { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; }
-.modal-content { background:#1c272e; padding:20px; border-radius:20px; width:100%; max-width:360px; }
+body {
+    margin:0;
+    background:#0b141a;
+    color:#fff;
+    font-family:sans-serif;
+}
 
-.input { width:100%; padding:15px; margin:10px 0; border-radius:10px; border:none; background:#222; color:#fff; }
-.btn { width:100%; padding:15px; border:none; border-radius:10px; margin-top:10px; font-weight:bold; cursor:pointer; }
+/* 🔥 CALENDARIO ABAJO */
+#calendar {
+    background:#111b21;
+    border-radius:12px;
+    padding:10px;
+    height:85vh;
+    position: relative;
+    z-index: 1;
+}
+
+.fc {
+    z-index: 1 !important;
+}
+
+/* 🔥 MODAL ARRIBA SIEMPRE */
+.modal {
+    position: fixed;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:99999;
+}
+
+.modal-content {
+    background:#1c272e;
+    padding:20px;
+    border-radius:20px;
+    width:100%;
+    max-width:360px;
+}
+
+.input {
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border-radius:10px;
+    border:none;
+    background:#222;
+    color:#fff;
+}
+
+.btn {
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    margin-top:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
 .blue { background:#00a884; color:#fff; }
 .green { background:#25d366; color:#fff; }
 
-#results div { padding:10px; border-bottom:1px solid #333; cursor:pointer; }
-#preview { width:100%; max-height:150px; display:none; margin:10px 0; }
-#loading { display:none; color:#00d2ff; }
+#results div {
+    padding:10px;
+    border-bottom:1px solid #333;
+    cursor:pointer;
+}
+
+#preview {
+    width:100%;
+    max-height:150px;
+    display:none;
+    margin:10px 0;
+}
+
+#loading {
+    display:none;
+    color:#00d2ff;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div id="calendar"></div>
-</div>
+<div id="calendar"></div>
 
 <div id="modal" class="modal">
 <div class="modal-content">
@@ -50,7 +114,7 @@ body { margin:0; background:#0b141a; color:#fff; font-family:sans-serif; }
 
 <input type="file" id="file-input">
 
-<div id="loading">Subiendo...</div>
+<div id="loading">Subiendo a la nube...</div>
 
 <button id="btn-procesar" class="btn blue">GUARDAR</button>
 <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP</a>
@@ -70,6 +134,7 @@ const app = initializeApp({
   authDomain: "gestionuf-remoto.firebaseapp.com",
   projectId: "gestionuf-remoto"
 });
+
 const db = getFirestore(app);
 
 const CLOUD_NAME = "dhryws88e";
@@ -78,7 +143,7 @@ const PHONE = "5491131552679";
 
 let dataUFs=[], reservas=[], selUF=null, fotoBlob=null, modoReserva=true;
 
-// cargar UF
+// 🔹 Cargar UFs
 (async ()=>{
   const snap = await getDocs(collection(db,"departamentos"));
   dataUFs = snap.docs.map(d=>({
@@ -87,7 +152,7 @@ let dataUFs=[], reservas=[], selUF=null, fotoBlob=null, modoReserva=true;
   }));
 })();
 
-// calendario
+// 🔹 Calendario
 const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
   initialView:'dayGridMonth',
   locale:'es',
@@ -96,7 +161,7 @@ const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
 });
 cal.render();
 
-// realtime
+// 🔹 Realtime
 onSnapshot(collection(db,"reservas_salon"), snap=>{
   reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
   cal.setOption('events', reservas.map(r=>({
@@ -106,36 +171,52 @@ onSnapshot(collection(db,"reservas_salon"), snap=>{
   })));
 });
 
-// abrir modal
+// 🔹 Abrir modal
 window.abrir = (fecha)=>{
-  selUF=null; fotoBlob=null;
+  document.body.style.overflow="hidden";
+
+  selUF=null;
+  fotoBlob=null;
   window.fechaSel=fecha;
 
   document.getElementById('modal').style.display="flex";
   document.getElementById('fecha-label').innerText=fecha;
 
+  document.getElementById('card').style.display="none";
+  document.getElementById('ui-search').style.display="block";
+  document.getElementById('preview').style.display="none";
+  document.getElementById('btn-wa').style.display="none";
+
   const res = reservas.find(r=>r.fecha===fecha);
+
   if(res){
     modoReserva=false;
     window.idReserva=res.id;
     selUF={UF:res.uf,Inquilino:res.inquilino};
+
     document.getElementById('card').style.display="block";
+    document.getElementById('ui-search').style.display="none";
     document.getElementById('info-uf').innerText=`UF ${res.uf} - ${res.inquilino}`;
-  }else{
+  } else {
     modoReserva=true;
   }
 };
 
-window.cerrar=()=>document.getElementById('modal').style.display="none";
+// 🔹 Cerrar modal
+window.cerrar = ()=>{
+  document.body.style.overflow="auto";
+  document.getElementById('modal').style.display="none";
+};
 
-// FILE INPUT FIX 🔥
+// 🔥 FIX FILE INPUT
 document.getElementById('file-input').onchange=(e)=>{
-  const file = e.target.files[0]; // FIX REAL
+  const file = e.target.files[0];
   if(!file) return;
 
   const reader = new FileReader();
   reader.onload = ev=>{
     const img = new Image();
+
     img.onload = ()=>{
       const canvas=document.createElement('canvas');
       const max=900;
@@ -146,6 +227,7 @@ document.getElementById('file-input').onchange=(e)=>{
 
       canvas.width=w;
       canvas.height=h;
+
       canvas.getContext('2d').drawImage(img,0,0,w,h);
 
       canvas.toBlob(blob=>{
@@ -156,32 +238,38 @@ document.getElementById('file-input').onchange=(e)=>{
         preview.style.display="block";
       },'image/jpeg',0.7);
     };
+
     img.src=ev.target.result;
   };
+
   reader.readAsDataURL(file);
 };
 
-// buscar UF
+// 🔹 Buscador
 document.getElementById('search').oninput=(e)=>{
   const v=e.target.value.toLowerCase();
   const cont=document.getElementById('results');
   cont.innerHTML="";
 
-  dataUFs.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
+  dataUFs
+  .filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
   .slice(0,5)
   .forEach(u=>{
     const d=document.createElement('div');
     d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
+
     d.onclick=()=>{
       selUF=u;
       document.getElementById('card').style.display="block";
       document.getElementById('info-uf').innerText=d.innerText;
+      document.getElementById('ui-search').style.display="none";
     };
+
     cont.appendChild(d);
   });
 };
 
-// guardar
+// 🔹 Guardar
 document.getElementById('btn-procesar').onclick=async()=>{
   if(!selUF) return alert("Elegí UF");
 
@@ -201,7 +289,7 @@ document.getElementById('btn-procesar').onclick=async()=>{
       });
 
       const d=await r.json();
-      console.log(d);
+      console.log("Cloudinary:", d);
 
       if(d.error) throw new Error(d.error.message);
       if(!d.secure_url) throw new Error("Sin URL");
@@ -209,7 +297,7 @@ document.getElementById('btn-procesar').onclick=async()=>{
       url=d.secure_url;
 
     }catch(e){
-      alert("Error nube: "+e.message);
+      alert("❌ Error nube: "+e.message);
       document.getElementById('loading').style.display="none";
       return;
     }
@@ -227,7 +315,7 @@ document.getElementById('btn-procesar').onclick=async()=>{
 
     msj=`Reserva SUM\nUF ${selUF.UF}\n${selUF.Inquilino}\n${url}`;
 
-  }else{
+  } else {
     await updateDoc(doc(db,"reservas_salon",window.idReserva),{
       comprobanteUrl:url
     });
@@ -240,7 +328,8 @@ document.getElementById('btn-procesar').onclick=async()=>{
   btnWA.style.display="block";
 
   document.getElementById('loading').style.display="none";
-  alert("Guardado OK");
+
+  alert("✅ Guardado OK");
 };
 </script>
 
