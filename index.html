@@ -20,7 +20,6 @@
         .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; margin: 10px 0; text-align: center; }
         .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--blue); cursor: pointer; margin: 15px 0; font-size: 14px; font-weight: bold; }
         .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; font-size: 14px; }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: #3d1c24; color: var(--red); border: 1px solid var(--red); }
@@ -31,7 +30,7 @@
 <body>
 
 <div class="app-bar">
-    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● MODO COMPATIBLE ACTIVO</div>
+    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● CONEXIÓN DIRECTA</div>
     <h1>SUM PRO</h1>
 </div>
 
@@ -41,7 +40,7 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading-overlay">⏳ SUBIENDO A LA NUBE...</div>
+        <div id="loading-overlay">⏳ SUBIENDO FOTO...</div>
         <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
@@ -59,7 +58,7 @@
 
         <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 15px; border: 1px solid var(--blue);">
             <span id="label-uf" style="font-weight: 900; color: #fff; display: block;"></span>
-            <label for="file-upload" class="file-label" id="file-status">📷 SELECCIONAR FOTO</label>
+            <label for="file-upload" class="file-label" id="file-status">📷 ELEGIR COMPROBANTE</label>
             <input type="file" id="file-upload" accept="image/*" style="display:none">
             <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Reserva</button>
             <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
@@ -99,15 +98,11 @@
     const fileInput = document.getElementById('file-upload');
     const fileStatus = document.getElementById('file-status');
     const loading = document.getElementById('loading-overlay');
-    const btnUpdate = document.getElementById('btn-update-pago');
-    const btnConfirm = document.getElementById('btn-confirm');
 
     fileInput.onchange = () => {
-        if(fileInput.files.length > 0) {
-            fileStatus.innerText = "✅ FOTO LISTA";
+        if(fileInput.files && fileInput.files) {
+            fileStatus.innerText = "✅ IMAGEN SELECCIONADA";
             fileStatus.style.color = "var(--green)";
-            btnUpdate.disabled = false;
-            btnConfirm.disabled = false;
         }
     };
 
@@ -127,7 +122,7 @@
         window.selectedDate = fecha;
         document.getElementById('m-date').innerText = fecha.split('-').reverse().join('-');
         fileInput.value = ""; 
-        fileStatus.innerText = "📷 SELECCIONAR FOTO"; 
+        fileStatus.innerText = "📷 ELEGIR COMPROBANTE"; 
         fileStatus.style.color = "#00d2ff";
         
         const res = reservas.find(r => r.fecha === fecha);
@@ -140,39 +135,43 @@
             document.getElementById('selection-card').style.display = 'block';
             document.getElementById('btn-confirm').style.display = 'none';
             document.getElementById('btn-update-pago').style.display = 'block';
-            btnUpdate.disabled = true; // Bloqueado hasta elegir foto
         } else {
             document.getElementById('ui-crear').style.display = 'block';
             document.getElementById('ui-ocupado').style.display = 'none';
             document.getElementById('selection-card').style.display = 'none';
             document.getElementById('btn-confirm').style.display = 'block';
             document.getElementById('btn-update-pago').style.display = 'none';
-            btnConfirm.disabled = false; // Permitir confirmar sin foto si se desea
         }
         document.getElementById('modal').style.display = 'flex';
     }
 
-    async function subirImagenDirecta() {
-        if(!fileInput.files || fileInput.files.length === 0) return "";
+    async function subirACloudinary() {
+        if(!fileInput.files || !fileInput.files) return "";
         loading.style.display = "flex";
         try {
             const formData = new FormData();
-            formData.append('file', fileInput.files);
+            formData.append('file', fileInput.files); // Aquí tomamos el archivo 0 específicamente
             formData.append('upload_preset', UPLOAD_PRESET);
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-            const data = await res.json();
-            if(data.error) throw new Error(data.error.message);
-            return data.secure_url || "";
-        } catch(e) { 
-            alert("Error de subida: " + e.message); 
-            return ""; 
-        } finally { 
-            loading.style.display = "none"; 
+            
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            if(data.secure_url) return data.secure_url;
+            throw new Error(data.error ? data.error.message : "Error desconocido");
+        } catch(e) {
+            alert("Error al subir: " + e.message);
+            return "";
+        } finally {
+            loading.style.display = "none";
         }
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
-        const url = await subirImagenDirecta();
+        if(!selUF) return;
+        const url = await subirACloudinary();
         await addDoc(collection(db, "reservas_salon"), { 
             fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
             comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente" 
@@ -182,8 +181,8 @@
     };
 
     document.getElementById('btn-update-pago').onclick = async () => {
-        const url = await subirImagenDirecta();
-        if(!url) { alert("Por favor, selecciona una foto válida primero"); return; }
+        const url = await subirACloudinary();
+        if(!url) { alert("Seleccioná una foto válida"); return; }
         await updateDoc(doc(db, "reservas_salon", window.currentResId), { 
             comprobanteUrl: url, pago: "Pagado" 
         });
