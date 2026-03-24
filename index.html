@@ -83,8 +83,9 @@ body{
 .blue{background:#00a884;color:#fff}
 .green{background:#25d366;color:#fff}
 
-/* RESULTADOS */
+/* RESULTADOS (FIX REAL) */
 #results{
+    display:none;
     max-height:200px;
     overflow-y:auto;
     background:#222;
@@ -92,10 +93,19 @@ body{
     margin-top:5px;
 }
 
+#results.active{
+    display:block;
+}
+
 #results div{
     padding:12px;
     border-bottom:1px solid #333;
     cursor:pointer;
+}
+
+/* CARD */
+#card{
+    display:none;
 }
 
 /* IMAGEN */
@@ -115,10 +125,6 @@ body{
     text-align:center;
     margin:10px 0;
 }
-
-/* 🔥 FIX BLOQUE VACÍO */
-#card{display:none}
-#card:empty{display:none!important}
 </style>
 </head>
 
@@ -176,13 +182,13 @@ const PHONE="5491131552679";
 
 let dataUFs=[],reservas=[],selUF=null,foto=null;
 
-/* FECHA */
+/* FORMATO FECHA */
 function formatear(f){
     const [y,m,d]=f.split("-");
     return `${d}-${m}-${y.slice(2)}`;
 }
 
-/* CARGA */
+/* CARGAR UFs */
 (async()=>{
     const snap=await getDocs(collection(db,"departamentos"));
     dataUFs=snap.docs.map(d=>({
@@ -219,37 +225,62 @@ window.abrir=(fecha)=>{
     modal.style.display="flex";
     fecha-label.innerText=formatear(fecha);
 
-    // 🔥 RESET TOTAL
+    // RESET UI
     card.style.display="none";
     ui-search.style.display="block";
     btn-wa.style.display="none";
     preview.style.display="none";
     preview.src="";
     search.value="";
+
+    // 🔥 FIX BLOQUE
+    results.classList.remove("active");
+    results.innerHTML="";
 };
 
 /* CERRAR */
 window.cerrar=()=>modal.style.display="none";
 
-/* BUSCADOR */
-search.oninput=e=>{
-    const v=e.target.value.toLowerCase();
-    results.innerHTML="";
-    if(!v)return;
+/* BUSCADOR (FIX COMPLETO) */
+search.oninput = e => {
+    const v = e.target.value.toLowerCase().trim();
+    results.innerHTML = "";
 
-    dataUFs.filter(u=>u.Inquilino.toLowerCase().includes(v)||u.UF.toString().includes(v))
-    .slice(0,5)
-    .forEach(u=>{
-        const d=document.createElement("div");
-        d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
-        d.onclick=()=>{
-            selUF=u;
-            card.style.display="block";
-            ui-search.style.display="none";
-            info-uf.innerText=d.innerText;
+    if(!v){
+        results.classList.remove("active");
+        return;
+    }
+
+    const filtrados = dataUFs.filter(u =>
+        u.Inquilino.toLowerCase().includes(v) ||
+        u.UF.toString().includes(v)
+    ).slice(0,5);
+
+    if(filtrados.length === 0){
+        results.classList.remove("active");
+        return;
+    }
+
+    filtrados.forEach(u=>{
+        const d = document.createElement("div");
+        d.innerText = `UF ${u.UF} - ${u.Inquilino}`;
+
+        d.onclick = () => {
+            selUF = u;
+
+            card.style.display = "block";
+            ui-search.style.display = "none";
+
+            results.classList.remove("active");
+            results.innerHTML = "";
+
+            info-uf.innerText = d.innerText;
         };
+
         results.appendChild(d);
     });
+
+    results.classList.add("active");
 };
 
 /* IMAGEN */
