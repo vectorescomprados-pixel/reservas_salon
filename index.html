@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Gestión</title>
+    <title>SUM PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -27,7 +27,7 @@
 <div id="modal" class="modal">
     <div class="modal-content">
         <h3 id="fecha-label" style="margin-top:0"></h3>
-        <div id="loading">⏳ SUBIENDO FOTO... ESPERE</div>
+        <div id="loading">⏳ SUBIENDO FOTO...</div>
         
         <div id="ui-search">
             <input id="search" class="input" placeholder="Buscar Unidad o Nombre">
@@ -41,8 +41,8 @@
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
 
-            <button id="btn-procesar" class="btn blue">1. GUARDAR EN SISTEMA</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank">2. ENVIAR WHATSAPP ✅</a>
+            <button id="btn-procesar" class="btn blue">GUARDAR Y GENERAR LINK</button>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
         </div>
         <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cerrar</button>
     </div>
@@ -52,12 +52,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const config = { 
-    apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
-    authDomain: "gestionuf-remoto.firebaseapp.com", 
-    projectId: "gestionuf-remoto" 
-};
-const app = initializeApp(config);
+const app = initializeApp({ apiKey: "AIzaSyDx...", authDomain: "gestionuf-remoto.firebaseapp.com", projectId: "gestionuf-remoto" });
 const db = getFirestore(app);
 
 const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "5491131552679";
@@ -101,45 +96,31 @@ function abrir(fecha){
         document.getElementById('ui-search').style.display = "none";
         document.getElementById('card').style.display = "block";
         document.getElementById('info-uf').innerText = `UF ${res.uf} - ${res.inquilino}`;
-        document.getElementById('btn-procesar').innerText = "ACTUALIZAR PAGO";
-    } else {
-        modoReserva = true;
-        document.getElementById('btn-procesar').innerText = "GUARDAR RESERVA";
     }
 }
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
+// 🔥 CORRECCIÓN 1: Capturar el archivo
 document.getElementById('file-input').onchange = (e) => {
     if(e.target.files.length > 0){
-        foto = e.target.files;
+        foto = e.target.files; 
         document.getElementById('file-text').innerText = "✅ FOTO LISTA";
     }
 };
 
-// 🔥 Función de subida con retorno de URL asegurado
 async function subirCloudinary(){
     if(!foto) return "";
     document.getElementById('loading').style.display = "block";
     const fd = new FormData();
     fd.append("file", foto);
     fd.append("upload_preset", UPLOAD_PRESET);
-    
     try {
         const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
-        const resData = await r.json();
-        if(resData.secure_url) {
-            console.log("URL Recibida:", resData.secure_url);
-            return resData.secure_url;
-        } else {
-            throw new Error("No se obtuvo URL");
-        }
-    } catch (e) { 
-        alert("Error subiendo foto: " + e.message); 
-        return "error"; 
-    } finally { 
-        document.getElementById('loading').style.display = "none"; 
-    }
+        const data = await r.json();
+        return data.secure_url || "";
+    } catch (e) { alert("Error en subida"); return "error"; }
+    finally { document.getElementById('loading').style.display = "none"; }
 }
 
 document.getElementById('search').oninput = (e) => {
@@ -159,39 +140,33 @@ document.getElementById('search').oninput = (e) => {
     });
 };
 
-// 🔥 PROCESO CORREGIDO
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return alert("Elige una UF");
+    if(!selUF) return alert("Selecciona UF");
+    
+    // 🔥 CORRECCIÓN 2: Esperar la URL real
+    const urlLink = await subirCloudinary();
+    if(urlLink === "error") return;
 
-    // 1. ESPERAMOS LA URL (AQUÍ ESTABA EL ERROR)
-    const urlFinal = await subirCloudinary();
-    if(urlFinal === "error") return;
-
-    // 2. GUARDAMOS EN FIREBASE
+    let msj = "";
     try {
-        let textoMsg = "";
         if(modoReserva) {
             await addDoc(collection(db,"reservas_salon"), { 
-                fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: urlFinal 
+                fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: urlLink 
             });
-            textoMsg = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fechaSel}\nLink: ${urlFinal}`;
+            msj = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fechaSel}\nLink: ${urlLink}`;
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlFinal });
-            textoMsg = `*PAGO SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${urlFinal}`;
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlLink });
+            msj = `*PAGO SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${urlLink}`;
         }
 
-        // 3. ARMAMOS EL BOTÓN DE WHATSAPP CON LA URL YA INYECTADA
+        // 🔥 CORRECCIÓN 3: Inyectar el link en el botón de WhatsApp
         const btnWA = document.getElementById('btn-wa');
-        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(textoMsg)}`;
-        
-        document.getElementById('btn-procesar').style.display = "none";
+        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
         btnWA.style.display = "flex";
+        document.getElementById('btn-procesar').style.display = "none";
         
-        alert("✅ Datos guardados. Toca el botón verde para enviar el link.");
-
-    } catch(err) { 
-        alert("Error Firebase: " + err.message); 
-    }
+        alert("✅ PROCESADO. Toca el botón verde.");
+    } catch(err) { alert("Error Firebase: " + err.message); }
 };
 </script>
 </body>
