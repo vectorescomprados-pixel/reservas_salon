@@ -18,7 +18,7 @@
         .green { background: #25d366; color: #fff; }
         #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
         #loading { display: none; margin: 10px 0; color: #1d6ed7; font-weight: bold; }
-        #preview { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; margin: 10px auto; display: none; border: 2px solid #1d6ed7; }
+        #preview { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; margin: 10px auto; display: none; border: 2px solid #1d6ed7; }
     </style>
 </head>
 <body>
@@ -44,7 +44,7 @@
             <input type="file" id="file-input" accept="image/*" style="display:none">
 
             <button id="btn-procesar" class="btn blue">GUARDAR EN SISTEMA</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank" rel="noopener noreferrer">ENVIAR WHATSAPP ✅</a>
         </div>
         <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cerrar</button>
     </div>
@@ -88,8 +88,10 @@ function abrir(fecha){
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
     document.getElementById('preview').style.display = "none";
+    document.getElementById('preview').src = "";
     document.getElementById('btn-wa').style.display = "none";
     document.getElementById('btn-procesar').style.display = "flex";
+    document.getElementById('btn-procesar').disabled = false;
     document.getElementById('file-input').value = "";
     document.getElementById('file-text').innerText = "ELEGIR FOTO";
 
@@ -109,10 +111,14 @@ function abrir(fecha){
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// COMPRESIÓN DE IMAGEN
+// COMPRESIÓN DE IMAGEN - CORREGIDO CON
 document.getElementById('file-input').onchange = (e) => {
-    const file = e.target.files;
+    const file = e.target.files; // FIX: Antes faltaba el
     if(!file) return;
+    
+    document.getElementById('btn-procesar').disabled = true;
+    document.getElementById('file-text').innerText = "⏳ PROCESANDO...";
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (ev) => {
@@ -121,14 +127,16 @@ document.getElementById('file-input').onchange = (e) => {
         img.onload = () => {
             const canvas = document.createElement('canvas');
             const scale = Math.min(1000 / img.width, 1);
-            canvas.width = img.width * scale; canvas.height = img.height * scale;
+            canvas.width = img.width * scale; 
+            canvas.height = img.height * scale;
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
             canvas.toBlob((blob) => {
                 fotoBlob = blob;
                 document.getElementById('preview').src = URL.createObjectURL(blob);
                 document.getElementById('preview').style.display = "block";
                 document.getElementById('file-text').innerText = "✅ LISTO";
-            }, 'image/jpeg', 0.7);
+                document.getElementById('btn-procesar').disabled = false;
+            }, 'image/jpeg', 0.8);
         };
     };
 };
@@ -138,9 +146,14 @@ async function subirCloudinary(){
     const fd = new FormData();
     fd.append("file", fotoBlob);
     fd.append("upload_preset", UPLOAD_PRESET);
-    const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
-    const d = await r.json();
-    return d.secure_url || "";
+    try {
+        const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+        const d = await r.json();
+        return d.secure_url || "";
+    } catch(e) {
+        console.error("Error subida:", e);
+        return "error";
+    }
 }
 
 document.getElementById('search').oninput = (e) => {
@@ -161,25 +174,44 @@ document.getElementById('search').oninput = (e) => {
 };
 
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return;
+    if(!selUF) return alert("Selecciona una UF");
+    
     document.getElementById('loading').style.display = "block";
+    document.getElementById('btn-procesar').innerText = "⏳ SUBIENDO...";
+    
     const url = await subirCloudinary();
+    if(url === "error") {
+        alert("Error al subir imagen");
+        document.getElementById('loading').style.display = "none";
+        document.getElementById('btn-procesar').innerText = "REINTENTAR";
+        return;
+    }
     
     let msj = "";
-    if(modoReserva) {
-        await addDoc(collection(db,"reservas_salon"), { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url });
-        msj = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fechaSel}${url ? `\nLink: ${url}` : ''}`;
-    } else {
-        await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
-        msj = `*PAGO SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}${url ? `\nLink: ${url}` : ''}`;
-    }
+    try {
+        if(modoReserva) {
+            await addDoc(collection(db,"reservas_salon"), { 
+                fecha: window.fechaSel, 
+                uf: selUF.UF, 
+                inquilino: selUF.Inquilino, 
+                comprobanteUrl: url 
+            });
+            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
+        } else {
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
+            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
+        }
 
-    const btnWA = document.getElementById('btn-wa');
-    btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
-    btnWA.style.display = "flex";
-    document.getElementById('btn-procesar').style.display = "none";
-    document.getElementById('loading').style.display = "none";
-    alert("✅ Guardado. Enviá el WhatsApp.");
+        const btnWA = document.getElementById('btn-wa');
+        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
+        btnWA.style.display = "flex";
+        document.getElementById('btn-procesar').style.display = "none";
+        document.getElementById('loading').style.display = "none";
+        
+        alert("✅ Guardado exitoso. Toca el botón verde.");
+    } catch(err) {
+        alert("Error en Firebase: " + err.message);
+    }
 };
 </script>
 </body>
