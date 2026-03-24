@@ -3,22 +3,39 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - FINAL</title>
+    <title>SUM PRO - Gestión de Reservas</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #0b141a; color: #fff; font-family: sans-serif; }
-        .container { padding: 10px; }
-        #calendar { background: #111; border-radius: 12px; padding: 10px; border: 1px solid #2a3942; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
-        .modal-content { background: #1c272e; padding: 25px; border-radius: 20px; width: 100%; max-width: 350px; text-align: center; }
-        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #2a3942; background: #222; color: #fff; text-align: center; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; }
-        .blue { background: #1d6ed7; color: #fff; }
-        .green { background: #25d366; color: #fff; }
-        #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
-        #loading { display: none; margin: 10px 0; color: #1d6ed7; font-weight: bold; }
-        #preview { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; margin: 10px auto; display: none; border: 2px solid #1d6ed7; }
+        * { box-sizing: border-box; outline: none; }
+        body { margin: 0; background: #0b141a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .container { padding: 10px; min-height: 100vh; }
+        
+        /* Calendario Custom */
+        #calendar { background: #111b21; border-radius: 15px; padding: 10px; border: 1px solid #2a3942; height: 85vh; }
+        .fc-header-toolbar { margin-bottom: 10px !important; }
+        .fc-toolbar-title { font-size: 1.1em !important; color: #e9edef; }
+        
+        /* Modal y UI */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(5px); }
+        .modal-content { background: #1c272e; padding: 20px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; border: 1px solid #32444e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #2a3942; background: #222e35; color: #fff; text-align: center; font-size: 16px; }
+        
+        /* Botones */
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; transition: 0.2s; }
+        .blue { background: #00a884; color: #fff; } /* Estilo WhatsApp Green */
+        .blue:disabled { background: #2a3942; color: #8696a0; cursor: not-allowed; }
+        .green { background: #25d366; color: #fff; border: 2px solid #25d366; }
+        
+        /* Resultados de Búsqueda */
+        #results { background: #222e35; border-radius: 12px; margin-top: -5px; max-height: 150px; overflow-y: auto; }
+        #results div { padding: 15px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; font-size: 14px; }
+        
+        /* Imagen y Feedback */
+        #loading { display: none; margin: 15px 0; color: #00d2ff; font-weight: bold; font-size: 14px; }
+        #preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; margin: 10px 0; display: none; border: 1px solid #32444e; background: #000; }
+        
+        #file-label { display: block; padding: 15px; border: 2px dashed #32444e; border-radius: 12px; cursor: pointer; margin: 10px 0; color: #8696a0; transition: 0.3s; }
+        #file-label.ready { border-color: #00a884; color: #00a884; background: rgba(0,168,132,0.1); }
     </style>
 </head>
 <body>
@@ -27,26 +44,30 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="fecha-label" style="margin-top:0"></h3>
-        <div id="loading">⏳ PROCESANDO...</div>
+        <h3 id="fecha-label" style="margin:0 0 15px 0; color:#e9edef;"></h3>
         
         <div id="ui-search">
-            <input id="search" class="input" placeholder="Buscar Unidad o Nombre">
-            <div id="results" style="max-height: 150px; overflow-y: auto;"></div>
+            <input id="search" class="input" placeholder="Buscar UF o Inquilino..." autocomplete="off">
+            <div id="results"></div>
         </div>
 
         <div id="card" style="display:none">
-            <p id="info-uf" style="font-weight: bold; color: #1d6ed7; font-size: 18px;"></p>
-            <img id="preview">
-            <label for="file-input" style="display:block; padding:15px; border:2px dashed #1d6ed7; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff">
-                📷 <span id="file-text">ELEGIR FOTO</span>
+            <p id="info-uf" style="font-weight: bold; color: #00a884; font-size: 18px; margin: 10px 0;"></p>
+            
+            <img id="preview" alt="Comprobante">
+
+            <label for="file-input" id="file-label">
+                📷 <span id="file-text">SUBIR COMPROBANTE</span>
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
 
-            <button id="btn-procesar" class="btn blue">GUARDAR EN SISTEMA</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank" rel="noopener noreferrer">ENVIAR WHATSAPP ✅</a>
+            <div id="loading">🚀 PROCESANDO...</div>
+
+            <button id="btn-procesar" class="btn blue">1. GUARDAR EN SISTEMA</button>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank" rel="noopener noreferrer">2. ENVIAR WHATSAPP ✅</a>
         </div>
-        <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cerrar</button>
+        
+        <button class="btn" style="background:transparent; color:#8696a0; margin-top:10px;" onclick="cerrar()">Cancelar</button>
     </div>
 </div>
 
@@ -54,95 +75,124 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Configuración Firebase
 const config = { apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", authDomain: "gestionuf-remoto.firebaseapp.com", projectId: "gestionuf-remoto" };
 const app = initializeApp(config);
 const db = getFirestore(app);
 
+// Configuración Cloudinary y Destino
 const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "5491131552679";
+
 let dataUFs = [], reservas = [], selUF = null, fotoBlob = null, modoReserva = true;
 
+// 1. Cargar base de departamentos
 async function init(){
-    const snap = await getDocs(collection(db,"departamentos"));
-    dataUFs = snap.docs.map(d => ({ UF: d.data().UF || d.data().Unidad, Inquilino: d.data().Inquilino || "Sin Nombre" }));
+    try {
+        const snap = await getDocs(collection(db,"departamentos"));
+        dataUFs = snap.docs.map(d => ({ 
+            UF: d.data().UF || d.data().Unidad, 
+            Inquilino: d.data().Inquilino || "Sin Nombre" 
+        }));
+    } catch(e) { console.error("Error inicializando:", e); }
 }
 init();
 
+// 2. Calendario
 const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
-    initialView:'dayGridMonth', locale: 'es',
+    initialView:'dayGridMonth', 
+    locale: 'es',
+    headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
     dateClick:(i) => abrir(i.dateStr),
     eventClick:(i) => abrir(i.event.startStr)
 });
 cal.render();
 
+// 3. Listener en tiempo real de reservas
 onSnapshot(collection(db,"reservas_salon"), snap => {
     reservas = snap.docs.map(d => ({id:d.id, ...d.data()}));
     cal.setOption('events', reservas.map(r => ({
-        title: "UF " + r.uf, start: r.fecha, backgroundColor: r.comprobanteUrl ? '#1d6ed7' : '#e91e63', borderColor: 'transparent'
+        title: "UF " + r.uf, 
+        start: r.fecha, 
+        backgroundColor: r.comprobanteUrl ? '#00a884' : '#e91e63', 
+        borderColor: 'transparent'
     })));
 });
 
+// 4. Lógica del Modal
 function abrir(fecha){
-    selUF = null; fotoBlob = null; window.fechaSel = fecha;
+    selUF = null; fotoBlob = null; window.fechaSel = fecha; window.idReserva = null;
     document.getElementById('fecha-label').innerText = fecha.split('-').reverse().join('/');
     document.getElementById('modal').style.display = "flex";
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
     document.getElementById('preview').style.display = "none";
-    document.getElementById('preview').src = "";
+    document.getElementById('file-text').innerText = "SUBIR COMPROBANTE";
+    document.getElementById('file-label').classList.remove('ready');
     document.getElementById('btn-wa').style.display = "none";
     document.getElementById('btn-procesar').style.display = "flex";
     document.getElementById('btn-procesar').disabled = false;
-    document.getElementById('file-input').value = "";
-    document.getElementById('file-text').innerText = "ELEGIR FOTO";
+    document.getElementById('btn-procesar').innerText = "1. GUARDAR EN SISTEMA";
+    document.getElementById('search').value = "";
+    document.getElementById('results').innerHTML = "";
 
     const res = reservas.find(r => r.fecha === fecha);
     if(res) {
         modoReserva = false; window.idReserva = res.id;
         selUF = { UF: res.uf, Inquilino: res.inquilino };
-        document.getElementById('ui-search').style.display = "none";
-        document.getElementById('card').style.display = "block";
-        document.getElementById('info-uf').innerText = `UF ${res.uf} - ${res.inquilino}`;
+        mostrarCard();
         document.getElementById('btn-procesar').innerText = "ACTUALIZAR PAGO";
     } else {
         modoReserva = true;
-        document.getElementById('btn-procesar').innerText = "GUARDAR RESERVA";
     }
+}
+
+function mostrarCard(){
+    document.getElementById('ui-search').style.display = "none";
+    document.getElementById('card').style.display = "block";
+    document.getElementById('info-uf').innerText = `UF ${selUF.UF} - ${selUF.Inquilino}`;
 }
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// COMPRESIÓN DE IMAGEN - CORREGIDO CON
-document.getElementById('file-input').onchange = (e) => {
-    const file = e.target.files; // FIX: Antes faltaba el
-    if(!file) return;
-    
+// 5. MOTOR DE COMPRESIÓN (Corregido e Infalible)
+document.getElementById('file-input').onchange = function(e) {
+    const file = e.target.files;
+    if (!file) return;
+
+    document.getElementById('file-text').innerText = "⏳ ACHICANDO...";
     document.getElementById('btn-procesar').disabled = true;
-    document.getElementById('file-text').innerText = "⏳ PROCESANDO...";
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = (ev) => {
+    reader.onload = function(event) {
         const img = new Image();
-        img.src = ev.target.result;
-        img.onload = () => {
+        img.onload = function() {
             const canvas = document.createElement('canvas');
-            const scale = Math.min(1000 / img.width, 1);
-            canvas.width = img.width * scale; 
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
+            const max = 900; // Calidad óptima
+            let w = img.width, h = img.height;
+            
+            if (w > h) { if (w > max) { h *= max / w; w = max; } }
+            else { if (h > max) { w *= max / h; h = max; } }
+            
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            
+            canvas.toBlob(function(blob) {
                 fotoBlob = blob;
                 document.getElementById('preview').src = URL.createObjectURL(blob);
                 document.getElementById('preview').style.display = "block";
-                document.getElementById('file-text').innerText = "✅ LISTO";
+                document.getElementById('file-text').innerText = "✅ IMAGEN LISTA";
+                document.getElementById('file-label').classList.add('ready');
                 document.getElementById('btn-procesar').disabled = false;
-            }, 'image/jpeg', 0.8);
+            }, 'image/jpeg', 0.7);
         };
+        img.src = event.target.result;
     };
 };
 
-async function subirCloudinary(){
-    if(!fotoBlob) return "";
+// 6. Subida a Cloudinary
+async function subirCloudinary() {
+    if (!fotoBlob) return "";
     const fd = new FormData();
     fd.append("file", fotoBlob);
     fd.append("upload_preset", UPLOAD_PRESET);
@@ -150,67 +200,67 @@ async function subirCloudinary(){
         const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
         const d = await r.json();
         return d.secure_url || "";
-    } catch(e) {
-        console.error("Error subida:", e);
-        return "error";
-    }
+    } catch (err) { return "error"; }
 }
 
+// 7. Buscador de UF
 document.getElementById('search').oninput = (e) => {
     const v = e.target.value.toLowerCase();
     const cont = document.getElementById('results'); cont.innerHTML = "";
     if(!v) return;
-    dataUFs.filter(u => u.Inquilino.toLowerCase().includes(v) || u.UF.toString().includes(v)).forEach(u => {
+    dataUFs.filter(u => u.Inquilino.toLowerCase().includes(v) || u.UF.toString().includes(v)).slice(0,5).forEach(u => {
         const d = document.createElement('div');
         d.innerText = `UF ${u.UF} - ${u.Inquilino}`;
-        d.onclick = () => {
-            selUF = u;
-            document.getElementById('card').style.display = "block";
-            document.getElementById('info-uf').innerText = `UF ${u.UF} - ${u.Inquilino}`;
-            cont.innerHTML = "";
-        };
+        d.onclick = () => { selUF = u; mostrarCard(); };
         cont.appendChild(d);
     });
 };
 
+// 8. Botón Guardar y Generar WhatsApp
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return alert("Selecciona una UF");
+    if(!selUF) return alert("Seleccioná UF");
     
     document.getElementById('loading').style.display = "block";
-    document.getElementById('btn-procesar').innerText = "⏳ SUBIENDO...";
+    document.getElementById('btn-procesar').style.display = "none";
     
-    const url = await subirCloudinary();
-    if(url === "error") {
-        alert("Error al subir imagen");
+    const urlLink = await subirCloudinary();
+    
+    if (urlLink === "error") {
+        alert("Fallo la subida. Intentá de nuevo.");
         document.getElementById('loading').style.display = "none";
-        document.getElementById('btn-procesar').innerText = "REINTENTAR";
+        document.getElementById('btn-procesar').style.display = "flex";
         return;
     }
     
-    let msj = "";
     try {
+        let msj = "";
+        const payload = { 
+            fecha: window.fechaSel, 
+            uf: selUF.UF, 
+            inquilino: selUF.Inquilino, 
+            comprobanteUrl: urlLink 
+        };
+
         if(modoReserva) {
-            await addDoc(collection(db,"reservas_salon"), { 
-                fecha: window.fechaSel, 
-                uf: selUF.UF, 
-                inquilino: selUF.Inquilino, 
-                comprobanteUrl: url 
-            });
-            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
+            await addDoc(collection(db,"reservas_salon"), payload);
+            msj = `*NUEVA RESERVA SUM*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
-            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlLink });
+            msj = `*PAGO SUM ACTUALIZADO*\n📍 *UF:* ${selUF.UF}\n👤 *Inquilino:* ${selUF.Inquilino}\n📅 *Fecha:* ${window.fechaSel}`;
         }
+
+        // Blindaje de link: solo se agrega si existe
+        if(urlLink) { msj += `\n🔗 *Comprobante:* ${urlLink}`; }
 
         const btnWA = document.getElementById('btn-wa');
         btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
         btnWA.style.display = "flex";
-        document.getElementById('btn-procesar').style.display = "none";
         document.getElementById('loading').style.display = "none";
         
-        alert("✅ Guardado exitoso. Toca el botón verde.");
+        alert("✅ SISTEMA ACTUALIZADO");
     } catch(err) {
-        alert("Error en Firebase: " + err.message);
+        alert("Error: " + err.message);
+        document.getElementById('btn-procesar').style.display = "flex";
     }
 };
 </script>
