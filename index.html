@@ -29,13 +29,13 @@ body{
     border:1px solid #2a3942;
 }
 
-/* MODAL - CORREGIDO PARA ADAPTARSE A PANTALLA */
+/* MODAL ADAPTADO */
 .modal{
     position:fixed;
     inset:0;
     background:rgba(0,0,0,.9);
     display:none;
-    align-items:center; /* Cambiado de flex-end a center para centrar en pantalla */
+    align-items:center; 
     justify-content:center;
     z-index:99999;
     padding:10px;
@@ -45,16 +45,10 @@ body{
     background:#1c272e;
     width:100%;
     max-width:420px;
-    border-radius:20px; /* Ajustado para ser simétrico al estar centrado */
+    border-radius:20px;
     padding:20px;
-    max-height:90vh; /* Aumentado ligeramente para mejor visibilidad */
+    max-height:90vh;
     overflow-y:auto;
-    animation:slideUp .25s ease;
-}
-
-@keyframes slideUp{
-    from{transform:translateY(40px);opacity:0}
-    to{transform:translateY(0);opacity:1}
 }
 
 /* INPUT */
@@ -82,9 +76,9 @@ body{
 
 .blue{background:#00a884;color:#fff}
 .green{background:#25d366;color:#fff}
-.red{background:#ff5252;color:#fff;margin-top:20px} /* Estilo para el botón borrar */
+.red{background:#ff5252;color:#fff;margin-top:20px}
 
-/* RESULTADOS (FIX REAL) */
+/* RESULTADOS */
 #results{
     display:none;
     max-height:200px;
@@ -94,9 +88,7 @@ body{
     margin-top:5px;
 }
 
-#results.active{
-    display:block;
-}
+#results.active{ display:block; }
 
 #results div{
     padding:12px;
@@ -104,12 +96,8 @@ body{
     cursor:pointer;
 }
 
-/* CARD */
-#card{
-    display:none;
-}
+#card{ display:none; }
 
-/* IMAGEN */
 #preview{
     width:100%;
     max-height:200px;
@@ -146,27 +134,22 @@ body{
 
 <div id="card">
 <p id="info-uf"></p>
-
 <img id="preview">
-
-<label style="display:block;padding:15px;border:2px dashed #444;border-radius:10px;text-align:center;margin:10px 0">
+<label style="display:block;padding:15px;border:2px dashed #444;border-radius:10px;text-align:center;margin:10px 0;cursor:pointer">
 📷 Subir comprobante
 <input type="file" id="file-input" accept="image/*" style="display:none">
 </label>
-
 <div id="loading">⌛ Subiendo...</div>
-
 <button id="btn-procesar" class="btn blue">Guardar</button>
 <a id="btn-wa" class="btn green" style="display:none" target="_blank">WhatsApp</a>
 </div>
 
-<button class="btn" onclick="cerrar()">Cerrar</button>
+<button class="btn" style="background:transparent;color:#8696a0" onclick="cerrar()">Cerrar</button>
 
 </div>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -175,60 +158,38 @@ const app = initializeApp({
     authDomain:"gestionuf-remoto.firebaseapp.com",
     projectId:"gestionuf-remoto"
 });
-
 const db = getFirestore(app);
 
-const CLOUD_NAME="dhryws88e";
-const UPLOAD_PRESET="ml_default";
-const PHONE="5491131552679";
+const CLOUD_NAME="dhryws88e", UPLOAD_PRESET="ml_default", PHONE="5491131552679";
+let dataUFs=[], reservas=[], selUF=null, foto=null;
 
-let dataUFs=[],reservas=[],selUF=null,foto=null;
-
-/* FORMATO FECHA */
 function formatear(f){
     const [y,m,d]=f.split("-");
     return `${d}-${m}-${y.slice(2)}`;
 }
 
-/* CARGAR UFs */
 (async()=>{
     const snap=await getDocs(collection(db,"departamentos"));
-    dataUFs=snap.docs.map(d=>({
-        UF:d.data().UF || d.data().Unidad,
-        Inquilino:d.data().Inquilino || "Sin Nombre"
-    }));
+    dataUFs=snap.docs.map(d=>({ UF:d.data().UF || d.data().Unidad, Inquilino:d.data().Inquilino || "Sin Nombre" }));
 })();
 
-/* CALENDARIO */
-const cal=new FullCalendar.Calendar(calendar,{
-    initialView:"dayGridMonth",
-    locale:"es",
-    dateClick:i=>abrir(i.dateStr),
-    eventClick:i=>abrir(i.event.startStr)
+const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
+    initialView:"dayGridMonth", locale:"es",
+    dateClick:i=>abrir(i.dateStr), eventClick:i=>abrir(i.event.startStr)
 });
 cal.render();
 
-/* RESERVAS */
 onSnapshot(collection(db,"reservas_salon"),snap=>{
     reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
     cal.setOption("events",reservas.map(r=>({
-        title:"UF "+r.uf,
-        start:r.fecha,
-        backgroundColor:r.comprobanteUrl ? "#00a884" : "#e91e63"
+        title:"UF "+r.uf, start:r.fecha, backgroundColor:r.comprobanteUrl ? "#00a884" : "#e91e63"
     })));
 });
 
-/* ABRIR */
 window.abrir=(fecha)=>{
-    selUF=null;
-    foto=null;
-    window.fechaSel=fecha;
-
-    const modal_el = document.getElementById("modal");
-    modal_el.style.display="flex";
+    selUF=null; foto=null; window.fechaSel=fecha;
+    document.getElementById("modal").style.display="flex";
     document.getElementById("fecha-label").innerText=formatear(fecha);
-
-    // RESET UI
     document.getElementById("card").style.display="none";
     document.getElementById("ui-search").style.display="block";
     document.getElementById("btn-wa").style.display="none";
@@ -236,58 +197,31 @@ window.abrir=(fecha)=>{
     document.getElementById("preview").src="";
     document.getElementById("search").value="";
     document.getElementById("btn-borrar-todo").style.display="none";
-
-    // 🔥 FIX BLOQUE
     const res_el = document.getElementById("results");
     res_el.classList.remove("active");
     res_el.innerHTML="";
 };
 
-/* CERRAR */
 window.cerrar=()=>document.getElementById("modal").style.display="none";
 
-/* BUSCADOR CON FUNCIÓN BORRAR */
-const search_input = document.getElementById("search");
-search_input.oninput = e => {
+document.getElementById("search").oninput = e => {
     const v = e.target.value.toLowerCase().trim();
     const results_el = document.getElementById("results");
     const btn_borrar = document.getElementById("btn-borrar-todo");
     results_el.innerHTML = "";
-
-    // FUNCIÓN BORRAR
-    if(v === "borrar"){
-        btn_borrar.style.display = "block";
-        results_el.classList.remove("active");
-        return;
-    } else {
-        btn_borrar.style.display = "none";
-    }
-
-    if(!v){
-        results_el.classList.remove("active");
-        return;
-    }
-
-    const filtrados = dataUFs.filter(u =>
-        u.Inquilino.toLowerCase().includes(v) ||
-        u.UF.toString().includes(v)
-    ).slice(0,5);
-
-    if(filtrados.length === 0){
-        results_el.classList.remove("active");
-        return;
-    }
-
+    if(v === "borrar"){ btn_borrar.style.display = "block"; results_el.classList.remove("active"); return; } 
+    else { btn_borrar.style.display = "none"; }
+    if(!v){ results_el.classList.remove("active"); return; }
+    const filtrados = dataUFs.filter(u => u.Inquilino.toLowerCase().includes(v) || u.UF.toString().includes(v)).slice(0,5);
+    if(filtrados.length === 0){ results_el.classList.remove("active"); return; }
     filtrados.forEach(u=>{
         const d = document.createElement("div");
         d.innerText = `UF ${u.UF} - ${u.Inquilino}`;
-
         d.onclick = () => {
             selUF = u;
             document.getElementById("card").style.display = "block";
             document.getElementById("ui-search").style.display = "none";
             results_el.classList.remove("active");
-            results_el.innerHTML = "";
             document.getElementById("info-uf").innerText = d.innerText;
         };
         results_el.appendChild(d);
@@ -295,18 +229,14 @@ search_input.oninput = e => {
     results_el.classList.add("active");
 };
 
-/* ACCIÓN DE BORRAR TODO */
 document.getElementById("btn-borrar-todo").onclick = async () => {
     if(!confirm("¿Borrar TODAS las reservas?")) return;
     const snap = await getDocs(collection(db, "reservas_salon"));
-    for (const d of snap.docs) {
-        await deleteDoc(doc(db, "reservas_salon", d.id));
-    }
-    alert("Eliminado");
-    location.reload();
+    for (const d of snap.docs) { await deleteDoc(doc(db, "reservas_salon", d.id)); }
+    alert("Eliminado"); location.reload();
 };
 
-/* IMAGEN */
+/* CORRECCIÓN MINIATURA */
 document.getElementById("file-input").onchange=e=>{
     const file=e.target.files;
     if(!file)return;
@@ -320,12 +250,11 @@ document.getElementById("file-input").onchange=e=>{
     reader.readAsDataURL(file);
 };
 
-/* GUARDAR */
+/* CORRECCIÓN WHATSAPP Y GUARDADO */
 document.getElementById("btn-procesar").onclick=async()=>{
     if(!selUF)return alert("Elegí UF");
     const btn_proc = document.getElementById("btn-procesar");
     const load_el = document.getElementById("loading");
-
     btn_proc.style.display="none";
     load_el.style.display="block";
 
@@ -334,35 +263,24 @@ document.getElementById("btn-procesar").onclick=async()=>{
         const fd=new FormData();
         fd.append("file",foto);
         fd.append("upload_preset",UPLOAD_PRESET);
-        const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
-            method:"POST",
-            body:fd
-        });
-        const d=await r.json();
-        if(d.secure_url) url=d.secure_url;
+        try {
+            const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{ method:"POST", body:fd });
+            const d=await r.json();
+            if(d.secure_url) url=d.secure_url;
+        } catch(e) { console.error("Error nube"); }
     }
 
     await addDoc(collection(db,"reservas_salon"),{
-        fecha:window.fechaSel,
-        uf:selUF.UF,
-        inquilino:selUF.Inquilino,
-        comprobanteUrl:url
+        fecha:window.fechaSel, uf:selUF.UF, inquilino:selUF.Inquilino, comprobanteUrl:url
     });
 
-    const msg=`Reserva SUM
-📅 ${formatear(window.fechaSel)}
-UF ${selUF.UF}
-${selUF.Inquilino}
-${url}`;
-
+    const msg=`Reserva SUM\n📅 ${formatear(window.fechaSel)}\nUF ${selUF.UF}\n${selUF.Inquilino}\n${url ? url : "Sin comprobante"}`;
     const wa_btn = document.getElementById("btn-wa");
     wa_btn.href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
     wa_btn.style.display="block";
-
     load_el.style.display="none";
     alert("Guardado OK");
 };
-
 </script>
 </body>
 </html>
