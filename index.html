@@ -3,24 +3,26 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Versión Final Producción</title>
+    <title>SUM PRO - Producción Final</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
-        body { margin: 0; background: #0b141a; color: #fff; font-family: sans-serif; }
+        body { margin: 0; background: #0b141a; color: #fff; font-family: -apple-system, sans-serif; }
         .container { padding: 10px; }
-        #calendar { background: #111b21; border-radius: 12px; padding: 10px; border: 1px solid #2a3942; height: 80vh; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; backdrop-filter: blur(4px); }
-        .modal-content { background: #1c272e; padding: 20px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border: 1px solid #32444e; }
-        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #2a3942; background: #222e35; color: #fff; text-align: center; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; transition: 0.2s; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #calendar { background: #111b21; border-radius: 12px; padding: 10px; border: 1px solid #2a3942; height: 85vh; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(4px); }
+        .modal-content { background: #1c272e; padding: 25px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; border: 1px solid #32444e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #2a3942; background: #222e35; color: #fff; text-align: center; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; transition: 0.3s; }
+        .btn:disabled { background: #2a3942 !important; color: #8696a0 !important; cursor: not-allowed; opacity: 0.6; }
         .blue { background: #00a884; color: #fff; }
         .green { background: #25d366; color: #fff; }
-        #results { background: #222e35; border-radius: 10px; max-height: 120px; overflow-y: auto; margin-top: -5px; }
-        #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
-        #preview { width: 100%; max-height: 150px; object-fit: contain; border-radius: 10px; margin: 10px 0; display: none; border: 1px solid #00a884; }
-        #loading { display: none; margin: 10px 0; color: #00d2ff; font-weight: bold; font-size: 12px; }
+        #results { background: #222e35; border-radius: 12px; max-height: 150px; overflow-y: auto; margin-top: -5px; border: 1px solid #32444e; }
+        #results div { padding: 15px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; font-size: 14px; }
+        #preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; margin: 10px 0; display: none; border: 2px solid #00a884; background: #000; }
+        #loading { display: none; margin: 15px 0; color: #00d2ff; font-weight: bold; font-size: 13px; }
+        #file-label { display: block; padding: 15px; border: 2px dashed #32444e; border-radius: 12px; cursor: pointer; margin: 10px 0; color: #8696a0; font-size: 13px; }
+        #file-label.active { border-color: #00a884; color: #00a884; background: rgba(0,168,132,0.1); }
     </style>
 </head>
 <body>
@@ -29,23 +31,30 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="fecha-label" style="margin:0 0 10px 0; color:#8696a0;"></h3>
+        <h3 id="fecha-label" style="margin:0 0 15px 0; color:#e9edef;"></h3>
+        
         <div id="ui-search">
-            <input id="search" class="input" placeholder="Buscar Unidad o Nombre">
+            <input id="search" class="input" placeholder="Buscar UF o Inquilino..." autocomplete="off">
             <div id="results"></div>
         </div>
+
         <div id="card" style="display:none">
             <p id="info-uf" style="font-weight: bold; color: #00a884; font-size: 18px; margin: 10px 0;"></p>
-            <img id="preview">
-            <label for="file-input" style="display:block; padding:15px; border:2px dashed #00a884; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff; font-size: 13px;">
-                📷 <span id="file-text">SUBIR COMPROBANTE</span>
+            
+            <img id="preview" src="">
+
+            <label for="file-input" id="file-label">
+                📷 <span id="file-text">ELEGIR COMPROBANTE</span>
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
-            <div id="loading">🚀 PROCESANDO...</div>
-            <button id="btn-procesar" class="btn blue">GUARDAR DATOS</button>
+
+            <div id="loading">🚀 SUBIENDO A LA NUBE...</div>
+
+            <button id="btn-procesar" class="btn blue" disabled>ESPERANDO FOTO...</button>
             <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
         </div>
-        <button id="btn-cancelar" class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
+        
+        <button id="btn-cancelar" class="btn" style="background:transparent; color:#8696a0; margin-top:10px;" onclick="cerrar()">Cancelar</button>
     </div>
 </div>
 
@@ -60,12 +69,14 @@ const db = getFirestore(app);
 const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "5491131552679";
 let dataUFs = [], reservas = [], selUF = null, fotoBlob = null, modoReserva = true, procesado = false;
 
+// 1. Cargar base de datos
 async function init(){
     const snap = await getDocs(collection(db,"departamentos"));
     dataUFs = snap.docs.map(d => ({ UF: d.data().UF || d.data().Unidad, Inquilino: d.data().Inquilino || "Sin Nombre" }));
 }
 init();
 
+// 2. Calendario
 const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
     initialView:'dayGridMonth', locale: 'es',
     dateClick:(i) => abrir(i.dateStr),
@@ -73,6 +84,7 @@ const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
 });
 cal.render();
 
+// 3. Listener Realtime
 onSnapshot(collection(db,"reservas_salon"), snap => {
     reservas = snap.docs.map(d => ({id:d.id, ...d.data()}));
     cal.setOption('events', reservas.map(r => ({
@@ -80,55 +92,58 @@ onSnapshot(collection(db,"reservas_salon"), snap => {
     })));
 });
 
+// 4. Lógica de Apertura
 window.abrir = (fecha) => {
     selUF = null; fotoBlob = null; window.fechaSel = fecha; procesado = false;
     document.getElementById('fecha-label').innerText = fecha.split('-').reverse().join('/');
     document.getElementById('modal').style.display = "flex";
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
-    const preview = document.getElementById('preview');
-    if (preview.src) URL.revokeObjectURL(preview.src); // ✅ FIX: Revoke memory leak
-    preview.style.display = "none";
-    preview.src = "";
+    document.getElementById('preview').style.display = "none";
     document.getElementById('btn-wa').style.display = "none";
-    document.getElementById('btn-procesar').style.display = "flex";
-    document.getElementById('btn-procesar').disabled = false;
-    document.getElementById('file-input').value = "";
-    document.getElementById('file-text').innerText = "SUBIR COMPROBANTE";
-
+    document.getElementById('file-text').innerText = "ELEGIR COMPROBANTE";
+    document.getElementById('file-label').classList.remove('active');
+    
     const res = reservas.find(r => r.fecha === fecha);
+    const btn = document.getElementById('btn-procesar');
+    btn.style.display = "flex";
+    
     if(res) {
         modoReserva = false; window.idReserva = res.id;
         selUF = { UF: res.uf, Inquilino: res.inquilino };
         document.getElementById('ui-search').style.display = "none";
         document.getElementById('card').style.display = "block";
         document.getElementById('info-uf').innerText = `UF ${res.uf} - ${res.inquilino}`;
-        document.getElementById('btn-procesar').innerText = "ACTUALIZAR PAGO";
+        btn.innerText = "ACTUALIZAR PAGO";
+        btn.disabled = false; // Permitimos actualizar sin obligar a nueva foto
     } else {
         modoReserva = true;
-        document.getElementById('btn-procesar').innerText = "GUARDAR RESERVA";
+        btn.innerText = "ESPERANDO FOTO...";
+        btn.disabled = true; // Bloqueado para reserva nueva hasta que haya foto
     }
 };
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// 🛠 MANEJO DE IMAGEN NIVEL PRO
+// 5. MOTOR DE IMAGEN PRO (Bloqueo de botón incluido)
 document.getElementById('file-input').onchange = function(e) {
-    const file = e.target.files; // ✅ FIX 1: file, no FileList
+    const file = e.target.files;
     if (!file) return;
 
-    // ✅ FIX 2: Validaciones de archivo
-    if (!file.type.startsWith("image/")) return alert("Solo imágenes");
-    if (file.size > 10 * 1024 * 1024) return alert("Máximo 10MB");
-    
     procesado = false;
     const label = document.getElementById('file-text');
-    label.innerText = "⏳ ACHICANDO...";
+    const btn = document.getElementById('btn-procesar');
     
+    label.innerText = "⏳ ACHICANDO...";
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO IMAGEN...";
+
     const timeout = setTimeout(() => {
         if (!procesado) {
-            fotoBlob = file; // Fallback al original
+            fotoBlob = file;
             label.innerText = "✅ LISTO (Original)";
+            btn.disabled = false;
+            btn.innerText = modoReserva ? "GUARDAR RESERVA" : "ACTUALIZAR PAGO";
         }
     }, 4000);
 
@@ -138,7 +153,7 @@ document.getElementById('file-input').onchange = function(e) {
         img.onload = function() {
             try {
                 const canvas = document.createElement('canvas');
-                const max = 1000;
+                const max = 900;
                 let w = img.width, h = img.height;
                 if (w > h) { if (w > max) { h *= max / w; w = max; } }
                 else { if (h > max) { w *= max / h; h = max; } }
@@ -148,23 +163,23 @@ document.getElementById('file-input').onchange = function(e) {
                 canvas.toBlob((blob) => {
                     procesado = true;
                     clearTimeout(timeout);
+                    fotoBlob = blob || file;
                     
                     const preview = document.getElementById('preview');
-                    if (preview.src) URL.revokeObjectURL(preview.src); // ✅ FIX: No Memory Leak
-
-                    if (!blob) { // ✅ FIX 3: Blob null check
-                        fotoBlob = file;
-                        label.innerText = "⚠️ Original";
-                    } else {
-                        fotoBlob = blob;
-                        preview.src = URL.createObjectURL(blob);
-                        preview.style.display = "block";
-                        label.innerText = "✅ IMAGEN LISTA";
-                    }
-                }, 'image/jpeg', 0.8);
+                    if (preview.src) URL.revokeObjectURL(preview.src);
+                    preview.src = URL.createObjectURL(fotoBlob);
+                    preview.style.display = "block";
+                    
+                    label.innerText = "✅ IMAGEN LISTA";
+                    document.getElementById('file-label').classList.add('active');
+                    
+                    // Habilitar botón solo cuando el blob existe
+                    btn.disabled = false;
+                    btn.innerText = modoReserva ? "GUARDAR RESERVA" : "ACTUALIZAR PAGO";
+                }, 'image/jpeg', 0.7);
             } catch (err) { 
                 fotoBlob = file; 
-                label.innerText = "✅ LISTO";
+                btn.disabled = false;
             }
         };
         img.src = event.target.result;
@@ -172,6 +187,7 @@ document.getElementById('file-input').onchange = function(e) {
     reader.readAsDataURL(file);
 };
 
+// 6. Buscador
 document.getElementById('search').oninput = (e) => {
     const v = e.target.value.toLowerCase();
     const cont = document.getElementById('results'); cont.innerHTML = "";
@@ -189,14 +205,13 @@ document.getElementById('search').oninput = (e) => {
     });
 };
 
+// 7. Guardar y Enviar
 document.getElementById('btn-procesar').onclick = async () => {
-    if(!selUF) return alert("Elegí una unidad");
-    if(!fotoBlob && !confirm("¿Continuar sin comprobante?")) return;
-
+    if(!selUF) return;
+    
     const btn = document.getElementById('btn-procesar');
     const load = document.getElementById('loading');
     
-    // ✅ FIX 4: Double Click Protection
     btn.disabled = true;
     btn.style.display = "none";
     load.style.display = "block";
@@ -209,40 +224,34 @@ document.getElementById('btn-procesar').onclick = async () => {
         try {
             const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
             const d = await r.json();
-            if(!d.secure_url) throw new Error("Cloudinary rejected upload"); // ✅ FIX 5: Cloudinary Validation
+            if(!d.secure_url) throw new Error("Cloudinary Error");
             url = d.secure_url;
         } catch(e) { 
-            alert("❌ Error de subida: " + e.message);
-            btn.disabled = false;
-            btn.style.display = "flex";
-            load.style.display = "none";
+            alert("❌ Error subiendo imagen. Reintentá.");
+            btn.disabled = false; btn.style.display = "flex"; load.style.display = "none";
             return;
         }
     }
 
     try {
-        const payload = { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url };
         let msj = "";
+        const payload = { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url };
 
         if(modoReserva) {
             await addDoc(collection(db,"reservas_salon"), payload);
-            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Comprobante: ${url}` : ''}`;
+            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
         } else {
             await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
-            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Comprobante: ${url}` : ''}`;
+            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
         }
 
-        const btnWA = document.getElementById('btn-wa');
-        btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
-        btnWA.style.display = "flex";
+        document.getElementById('btn-wa').href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
+        document.getElementById('btn-wa').style.display = "flex";
         load.style.display = "none";
         alert("✅ GUARDADO EXITOSO");
-
     } catch(err) {
         alert("❌ Error Firebase: " + err.message);
-        btn.disabled = false;
-        btn.style.display = "flex";
-        load.style.display = "none";
+        btn.disabled = false; btn.style.display = "flex"; load.style.display = "none";
     }
 };
 </script>
