@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - FIX TOTAL</title>
+    <title>SUM PRO - FIX FINAL</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
@@ -40,7 +40,7 @@
                 <input type="file" id="file-input" accept="image/*" style="display:none">
             </label>
 
-            <div id="loading">⌛ SUBIENDO A LA NUBE...</div>
+            <div id="loading">⌛ SUBIENDO...</div>
             <button id="btn-procesar" class="btn blue">GUARDAR DATOS</button>
             <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP</a>
         </div>
@@ -64,7 +64,7 @@ const CLOUD_NAME = "dhryws88e";
 const UPLOAD_PRESET = "ml_default"; 
 const PHONE = "5491131552679";
 
-let dataUFs=[], reservas=[], selUF=null, fotoBlob=null, modoReserva=true;
+let dataUFs=[], reservas=[], selUF=null, fotoArchivo=null;
 
 // Cargar UFs
 (async ()=>{
@@ -89,7 +89,7 @@ onSnapshot(collection(db,"reservas_salon"), snap=>{
 });
 
 window.abrir = (fecha)=>{
-    selUF=null; fotoBlob=null; window.fechaSel=fecha;
+    selUF=null; fotoArchivo=null; window.fechaSel=fecha;
     document.getElementById('modal').style.display="flex";
     document.getElementById('fecha-label').innerText=fecha.split('-').reverse().join('/');
     document.getElementById('card').style.display="none";
@@ -99,36 +99,34 @@ window.abrir = (fecha)=>{
     document.getElementById('preview').style.display="none";
     document.getElementById('preview').src = "";
     document.getElementById('search').value = "";
+    document.getElementById('file-input').value = "";
     
     const res = reservas.find(r=>r.fecha===fecha);
     if(res){
-        modoReserva=false; window.idReserva=res.id;
+        window.modoReserva=false; window.idReserva=res.id;
         selUF={UF:res.uf, Inquilino:res.inquilino};
         document.getElementById('card').style.display="block";
         document.getElementById('ui-search').style.display="none";
         document.getElementById('info-uf').innerText=`UF ${res.uf} - ${res.inquilino}`;
     } else {
-        modoReserva=true;
+        window.modoReserva=true;
     }
 };
 
 window.cerrar = () => document.getElementById('modal').style.display="none";
 
-// 🔥 MOTOR DE IMAGEN ULTRA-DIRECTO (Sin Canvas para probar)
+// 🔥 FIX MOTOR DE IMAGEN
 document.getElementById('file-input').onchange = (e) => {
     const file = e.target.files;
     if (!file) return;
 
-    // Guardamos el archivo original directamente
-    fotoBlob = file;
+    fotoArchivo = file; // Guardamos el archivo REAL
 
-    // Mostrar miniatura usando FileReader (más compatible que URL.createObjectURL)
     const reader = new FileReader();
     reader.onload = (event) => {
         const preview = document.getElementById('preview');
         preview.src = event.target.result;
         preview.style.display = "block";
-        console.log("Miniatura cargada");
     };
     reader.readAsDataURL(file);
 };
@@ -139,14 +137,13 @@ document.getElementById('btn-procesar').onclick = async () => {
     const btn = document.getElementById('btn-procesar');
     const load = document.getElementById('loading');
     
-    btn.style.display="none"; 
-    load.style.display="block";
+    btn.style.display="none"; load.style.display="block";
 
     let urlFinal = "";
 
-    if(fotoBlob){
+    if(fotoArchivo){
         const fd = new FormData();
-        fd.append("file", fotoBlob);
+        fd.append("file", fotoArchivo); // Ahora sí enviamos el archivo individual
         fd.append("upload_preset", UPLOAD_PRESET);
 
         try {
@@ -159,10 +156,10 @@ document.getElementById('btn-procesar').onclick = async () => {
             if(data.secure_url) {
                 urlFinal = data.secure_url;
             } else {
-                alert("Cloudinary Error: " + (data.error ? data.error.message : "Desconocido"));
+                alert("Cloudinary Error: " + (data.error ? data.error.message : "Error desconocido"));
             }
         } catch(e) {
-            alert("Error de red al subir imagen");
+            alert("Error de conexión con Cloudinary");
         }
     }
 
@@ -175,7 +172,7 @@ document.getElementById('btn-procesar').onclick = async () => {
             comprobanteUrl: urlFinal 
         };
 
-        if(modoReserva) {
+        if(window.modoReserva) {
             await addDoc(collection(db,"reservas_salon"), datos);
         } else {
             await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlFinal });
