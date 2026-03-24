@@ -2,132 +2,105 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SUM PRO</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b141a">
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
 
-/* 🌌 BASE */
 body{
-margin:0;
-font-family:-apple-system,sans-serif;
-background: radial-gradient(circle at top,#0f2027,#0b141a);
-color:#fff;
+    background:#0b141a;
+    color:#fff;
 }
 
-/* 📅 CALENDARIO */
+/* CALENDARIO */
 #calendar{
-height:calc(100vh - 20px);
-margin:10px;
-background:#111b21;
-border-radius:15px;
-padding:10px;
+    height:100vh;
+    padding:10px;
 }
 
-/* 🧊 MODAL */
+/* MODAL FIX REAL */
 .modal{
-position:fixed;
-inset:0;
-display:none;
-align-items:flex-end;
-justify-content:center;
-background:rgba(0,0,0,.7);
-backdrop-filter:blur(10px);
-z-index:999999;
+    position:fixed;
+    top:0;left:0;
+    width:100%;
+    height:100%;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.7);
+    z-index:9999;
 }
 
-/* 🪟 CARD */
-.modal-content{
-width:95%;
-max-width:400px;
-max-height:90vh;
-overflow-y:auto;
-padding:20px;
-border-radius:20px 20px 0 0;
-
-background:rgba(28,39,46,0.9);
-backdrop-filter:blur(15px);
-
-border:1px solid rgba(255,255,255,0.08);
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
+/* CONTENEDOR */
+.modal-box{
+    width:95%;
+    max-width:400px;
+    background:#121b22;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 10px 40px rgba(0,0,0,.8);
 }
 
-/* 🔤 INPUT */
+/* INPUT */
 .input{
-width:100%;
-padding:14px;
-border-radius:12px;
-border:none;
-background:#1a252c;
-color:#fff;
-margin-top:10px;
-text-align:center;
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    background:#1f2c33;
+    color:#fff;
+    margin:10px 0;
 }
 
-/* 📋 RESULTADOS (FIX BLOQUE NEGRO) */
-#results{
-display:none;
-background:#1c272e;
-border-radius:12px;
-max-height:150px;
-overflow-y:auto;
-margin-top:5px;
-border:1px solid #2a3942;
-}
-
-#results.active{
-display:block;
-}
-
-#results div{
-padding:12px;
-border-bottom:1px solid #2a3942;
-cursor:pointer;
-}
-
-/* 🔘 BOTONES */
+/* BOTONES */
 .btn{
-width:100%;
-padding:14px;
-margin-top:12px;
-border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    margin-top:10px;
+    font-weight:bold;
 }
 
-.blue{background:#00a884;color:#fff;}
-.green{background:#25d366;color:#fff;}
-.red{background:#ff3b3b;color:#fff;}
+.blue{background:#00a884}
+.green{background:#25d366}
+.red{background:#ff4444}
 
-/* 📷 IMG */
+/* RESULTADOS */
+#results div{
+    padding:10px;
+    border-bottom:1px solid #333;
+}
+
+/* IMAGEN */
 #preview{
-width:100%;
-max-height:180px;
-display:none;
-margin-top:10px;
-border-radius:10px;
-border:2px solid #00a884;
-object-fit:contain;
+    width:100%;
+    max-height:200px;
+    margin-top:10px;
+    border-radius:10px;
+    display:none;
 }
 
-/* ⏳ */
+/* LOADER */
 #loading{
-display:none;
-margin:10px 0;
-color:#00d2ff;
-font-weight:bold;
-text-align:center;
+    display:none;
+    text-align:center;
+    margin-top:10px;
 }
 
-/* 📱 MOBILE */
-@media(max-width:480px){
-#calendar{height:70vh;margin:5px;}
-.modal-content{padding:18px;}
+/* MOBILE FIX */
+@media (max-height:600px){
+    .modal-box{
+        max-height:90vh;
+        overflow:auto;
+    }
 }
-
 </style>
 </head>
 
@@ -135,603 +108,167 @@ text-align:center;
 
 <div id="calendar"></div>
 
+<!-- MODAL -->
 <div id="modal" class="modal">
-<div class="modal-content">
+    <div class="modal-box">
 
-<h3 id="fecha-label"></h3>
+        <h3 id="fecha"></h3>
 
-<div id="ui-search">
-<input id="search" class="input" placeholder="Buscar UF o Inquilino">
-<div id="results"></div>
+        <div id="searchBox">
+            <input id="search" class="input" placeholder="Buscar UF o Inquilino">
+            <div id="results"></div>
+            <button id="btnDelete" class="btn red" style="display:none">BORRAR PRUEBAS</button>
+        </div>
 
-<button id="btn-clean" class="btn red" style="display:none">
-🔥 BORRAR PRUEBAS
-</button>
-</div>
+        <div id="card" style="display:none">
+            <p id="info"></p>
 
-<div id="card" style="display:none">
-<p id="info-uf"></p>
+            <input type="file" id="file">
+            <img id="preview">
 
-<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;margin-top:10px">
-📷 Subir comprobante
-<input type="file" id="file-input" accept="image/*" style="display:none">
-</label>
+            <div id="loading">Subiendo...</div>
 
-<img id="preview">
+            <button id="guardar" class="btn blue">Guardar</button>
+            <a id="wa" class="btn green" target="_blank" style="display:none">Enviar WhatsApp</a>
+        </div>
 
-<div id="loading">🚀 Subiendo...</div>
+        <button class="btn" onclick="cerrar()">Cerrar</button>
 
-<button id="btn-procesar" class="btn blue">GUARDAR</button>
-<a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
-</div>
-
-<button class="btn" onclick="cerrar()">Cerrar</button>
-
-</div>
+    </div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 FORMATO FECHA */
-function formatFecha(f){
-const [y,m,d]=f.split("-");
-return `${d}-${m}-${y.slice(2)}`;
-}
-
-/* FIREBASE */
-const app=initializeApp({
-apiKey:"AIzaSyDx...",
-authDomain:"gestionuf-remoto.firebaseapp.com",
-projectId:"gestionuf-remoto"
+/* CONFIG */
+const app = initializeApp({
+ apiKey:"AIzaSyDx...",
+ authDomain:"gestionuf-remoto.firebaseapp.com",
+ projectId:"gestionuf-remoto"
 });
-const db=getFirestore(app);
 
-const CLOUD_NAME="dhryws88e";
-const UPLOAD_PRESET="ml_default";
-const PHONE="5491131552679";
+const db = getFirestore(app);
 
-let dataUFs=[],reservas=[],selUF=null,foto=null;
+const CLOUD="dhryws88e";
+const PRESET="ml_default";
 
-/* CARGAR UFs */
-(async()=>{
-const snap=await getDocs(collection(db,"departamentos"));
-dataUFs=snap.docs.map(d=>({
-UF:d.data().UF||d.data().Unidad,
-Inquilino:d.data().Inquilino||"Sin Nombre"
-}));
-})();
+let UFs=[], reservas=[], sel=null, file=null;
+
+/* CARGA UFs */
+const snap = await getDocs(collection(db,"departamentos"));
+UFs = snap.docs.map(d=>d.data());
 
 /* CALENDARIO */
-const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
-initialView:'dayGridMonth',
-locale:'es',
-dateClick:i=>abrir(i.dateStr),
-eventClick:i=>abrir(i.event.startStr)
+const cal = new FullCalendar.Calendar(document.getElementById('calendar'),{
+ initialView:'dayGridMonth',
+ locale:'es',
+ dateClick:e=>abrir(e.dateStr)
 });
 cal.render();
 
 /* REALTIME */
-onSnapshot(collection(db,"reservas_salon"),snap=>{
-reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
-cal.setOption('events',reservas.map(r=>({
-title:`UF ${r.uf} • ${r.fechaVisual||formatFecha(r.fecha)}`,
-start:r.fecha,
-backgroundColor:r.comprobanteUrl?'#00a884':'#e91e63'
-})));
+onSnapshot(collection(db,"reservas_salon"), snap=>{
+ reservas = snap.docs.map(d=>({id:d.id,...d.data()}));
+ cal.setOption('events', reservas.map(r=>({
+  title:"UF "+r.uf,
+  start:r.fecha
+ })));
 });
 
 /* ABRIR */
-window.abrir=(fecha)=>{
-window.fechaSel=fecha;
-selUF=null;
-foto=null;
-
-modal.style.display="flex";
-fecha-label.innerText=formatFecha(fecha);
-
-ui-search.style.display="block";
-card.style.display="none";
-btn-wa.style.display="none";
-preview.style.display="none";
-results.classList.remove("active");
-results.innerHTML="";
-search.value="";
+window.abrir = (f)=>{
+ document.getElementById("modal").style.display="flex";
+ document.getElementById("fecha").innerText=f;
+ document.getElementById("searchBox").style.display="block";
+ document.getElementById("card").style.display="none";
 };
 
 /* CERRAR */
-window.cerrar=()=>modal.style.display="none";
-
-/* BUSCADOR + COMANDO BORRAR */
-search.oninput = (e)=>{
-const v=e.target.value.toLowerCase().trim();
-results.innerHTML="";
-
-if(v==="borrar"){
-btn-clean.style.display="block";
-results.classList.remove("active");
-return;
-}else{
-btn-clean.style.display="none";
-}
-
-if(!v){
-results.classList.remove("active");
-return;
-}
-
-const filtrados = dataUFs.filter(u=>
-u.Inquilino.toLowerCase().includes(v) ||
-u.UF.toString().includes(v)
-).slice(0,5);
-
-if(filtrados.length===0){
-results.classList.remove("active");
-return;
-}
-
-filtrados.forEach(u=>{
-const d=document.createElement("div");
-d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
-
-d.onclick=()=>{
-selUF=u;
-card.style.display="block";
-ui-search.style.display="none";
-info-uf.innerText=d.innerText;
-results.classList.remove("active");
+window.cerrar = ()=>{
+ document.getElementById("modal").style.display="none";
 };
 
-results.appendChild(d);
-});
+/* BUSCAR */
+search.oninput=(e)=>{
+ let v=e.target.value.toLowerCase();
+ results.innerHTML="";
 
-results.classList.add("active");
+ document.getElementById("btnDelete").style.display = (v==="borrar")?"block":"none";
+
+ if(!v || v==="borrar") return;
+
+ UFs.filter(u=>u.Inquilino.toLowerCase().includes(v))
+ .slice(0,5)
+ .forEach(u=>{
+   let d=document.createElement("div");
+   d.innerText=u.Inquilino;
+   d.onclick=()=>{
+     sel=u;
+     searchBox.style.display="none";
+     card.style.display="block";
+     info.innerText=u.Inquilino;
+   };
+   results.appendChild(d);
+ });
 };
 
-/* 🔥 BORRAR TODO FIREBASE */
-btn-clean.onclick = async ()=>{
-if(!confirm("⚠️ ¿Borrar TODAS las pruebas?")) return;
-
-const snap = await getDocs(collection(db,"reservas_salon"));
-
-for(const d of snap.docs){
-await deleteDoc(doc(db,"reservas_salon", d.id));
-}
-
-alert("🔥 Firebase limpio");
-location.reload();
-};
-
-/* FOTO */
-file-input.onchange=e=>{
-const f=e.target.files[0];
-if(!f)return;
-foto=f;
-
-const reader=new FileReader();
-reader.onload=ev=>{
-preview.src=ev.target.result;
-preview.style.display="block";
-};
-reader.readAsDataURL(f);
+/* PREVIEW */
+file.onchange=(e)=>{
+ file=e.target.files[0];
+ preview.src=URL.createObjectURL(file);
+ preview.style.display="block";
 };
 
 /* GUARDAR */
-btn-procesar.onclick=async()=>{
-if(!selUF) return alert("Elegí UF");
+guardar.onclick=async()=>{
+ if(!sel) return alert("Elegí UF");
 
-loading.style.display="block";
+ loading.style.display="block";
 
-let url="";
+ let url="";
 
-if(foto){
-const fd=new FormData();
-fd.append("file",foto);
-fd.append("upload_preset",UPLOAD_PRESET);
+ if(file){
+  const fd=new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", PRESET);
 
-try{
-const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
-method:"POST",
-body:fd
-});
-const d=await r.json();
-if(d.secure_url) url=d.secure_url;
-}catch(e){alert("Error imagen");}
-}
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{
+   method:"POST", body:fd
+  });
+  const d=await r.json();
+  url=d.secure_url||"";
+ }
 
-const datos={
-fecha:window.fechaSel,
-fechaVisual:formatFecha(window.fechaSel),
-uf:selUF.UF,
-inquilino:selUF.Inquilino,
-comprobanteUrl:url
+ await addDoc(collection(db,"reservas_salon"),{
+  fecha:fecha.innerText,
+  uf:sel.UF,
+  inquilino:sel.Inquilino,
+  comprobanteUrl:url
+ });
+
+ loading.style.display="none";
+
+ wa.href=`https://wa.me/?text=Reserva ${sel.Inquilino}`;
+ wa.style.display="block";
 };
 
-await addDoc(collection(db,"reservas_salon"),datos);
+/* BORRAR TODO 🔥 */
+btnDelete.onclick=async()=>{
+ if(!confirm("Borrar TODO?")) return;
 
-const msg=`*RESERVA SUM*
-📅 ${formatFecha(window.fechaSel)}
-🏠 UF ${selUF.UF}
-👤 ${selUF.Inquilino}
-${url?"🔗 "+url:"Sin comprobante"}`;
+ const snap = await getDocs(collection(db,"reservas_salon"));
+ for(const d of snap.docs){
+   await deleteDoc(doc(db,"reservas_salon",d.id));
+ }
 
-btn-wa.href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
-btn-wa.style.display="block";
+ alert("Firebase limpio");
 
-loading.style.display="none";
-alert("Guardado OK");
-};
-
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUM PRO</title>
-
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
-<style>
-
-/* 🌌 BASE */
-body{
-margin:0;
-font-family:-apple-system,sans-serif;
-background: radial-gradient(circle at top,#0f2027,#0b141a);
-color:#fff;
-}
-
-/* 📅 CALENDARIO */
-#calendar{
-height:calc(100vh - 20px);
-margin:10px;
-background:#111b21;
-border-radius:15px;
-padding:10px;
-}
-
-/* 🧊 MODAL */
-.modal{
-position:fixed;
-inset:0;
-display:none;
-align-items:flex-end;
-justify-content:center;
-background:rgba(0,0,0,.7);
-backdrop-filter:blur(10px);
-z-index:999999;
-}
-
-/* 🪟 CARD */
-.modal-content{
-width:95%;
-max-width:400px;
-max-height:90vh;
-overflow-y:auto;
-padding:20px;
-border-radius:20px 20px 0 0;
-
-background:rgba(28,39,46,0.9);
-backdrop-filter:blur(15px);
-
-border:1px solid rgba(255,255,255,0.08);
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
-}
-
-/* 🔤 INPUT */
-.input{
-width:100%;
-padding:14px;
-border-radius:12px;
-border:none;
-background:#1a252c;
-color:#fff;
-margin-top:10px;
-text-align:center;
-}
-
-/* 📋 RESULTADOS (FIX BLOQUE NEGRO) */
-#results{
-display:none;
-background:#1c272e;
-border-radius:12px;
-max-height:150px;
-overflow-y:auto;
-margin-top:5px;
-border:1px solid #2a3942;
-}
-
-#results.active{
-display:block;
-}
-
-#results div{
-padding:12px;
-border-bottom:1px solid #2a3942;
-cursor:pointer;
-}
-
-/* 🔘 BOTONES */
-.btn{
-width:100%;
-padding:14px;
-margin-top:12px;
-border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.blue{background:#00a884;color:#fff;}
-.green{background:#25d366;color:#fff;}
-.red{background:#ff3b3b;color:#fff;}
-
-/* 📷 IMG */
-#preview{
-width:100%;
-max-height:180px;
-display:none;
-margin-top:10px;
-border-radius:10px;
-border:2px solid #00a884;
-object-fit:contain;
-}
-
-/* ⏳ */
-#loading{
-display:none;
-margin:10px 0;
-color:#00d2ff;
-font-weight:bold;
-text-align:center;
-}
-
-/* 📱 MOBILE */
-@media(max-width:480px){
-#calendar{height:70vh;margin:5px;}
-.modal-content{padding:18px;}
-}
-
-</style>
-</head>
-
-<body>
-
-<div id="calendar"></div>
-
-<div id="modal" class="modal">
-<div class="modal-content">
-
-<h3 id="fecha-label"></h3>
-
-<div id="ui-search">
-<input id="search" class="input" placeholder="Buscar UF o Inquilino">
-<div id="results"></div>
-
-<button id="btn-clean" class="btn red" style="display:none">
-🔥 BORRAR PRUEBAS
-</button>
-</div>
-
-<div id="card" style="display:none">
-<p id="info-uf"></p>
-
-<label style="display:block;padding:12px;border:2px dashed #555;border-radius:10px;cursor:pointer;margin-top:10px">
-📷 Subir comprobante
-<input type="file" id="file-input" accept="image/*" style="display:none">
-</label>
-
-<img id="preview">
-
-<div id="loading">🚀 Subiendo...</div>
-
-<button id="btn-procesar" class="btn blue">GUARDAR</button>
-<a id="btn-wa" class="btn green" style="display:none" target="_blank">WHATSAPP</a>
-</div>
-
-<button class="btn" onclick="cerrar()">Cerrar</button>
-
-</div>
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* 🔥 FORMATO FECHA */
-function formatFecha(f){
-const [y,m,d]=f.split("-");
-return `${d}-${m}-${y.slice(2)}`;
-}
-
-/* FIREBASE */
-const app=initializeApp({
-apiKey:"AIzaSyDx...",
-authDomain:"gestionuf-remoto.firebaseapp.com",
-projectId:"gestionuf-remoto"
-});
-const db=getFirestore(app);
-
-const CLOUD_NAME="dhryws88e";
-const UPLOAD_PRESET="ml_default";
-const PHONE="5491131552679";
-
-let dataUFs=[],reservas=[],selUF=null,foto=null;
-
-/* CARGAR UFs */
-(async()=>{
-const snap=await getDocs(collection(db,"departamentos"));
-dataUFs=snap.docs.map(d=>({
-UF:d.data().UF||d.data().Unidad,
-Inquilino:d.data().Inquilino||"Sin Nombre"
-}));
-})();
-
-/* CALENDARIO */
-const cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
-initialView:'dayGridMonth',
-locale:'es',
-dateClick:i=>abrir(i.dateStr),
-eventClick:i=>abrir(i.event.startStr)
-});
-cal.render();
-
-/* REALTIME */
-onSnapshot(collection(db,"reservas_salon"),snap=>{
-reservas=snap.docs.map(d=>({id:d.id,...d.data()}));
-cal.setOption('events',reservas.map(r=>({
-title:`UF ${r.uf} • ${r.fechaVisual||formatFecha(r.fecha)}`,
-start:r.fecha,
-backgroundColor:r.comprobanteUrl?'#00a884':'#e91e63'
-})));
-});
-
-/* ABRIR */
-window.abrir=(fecha)=>{
-window.fechaSel=fecha;
-selUF=null;
-foto=null;
-
-modal.style.display="flex";
-fecha-label.innerText=formatFecha(fecha);
-
-ui-search.style.display="block";
-card.style.display="none";
-btn-wa.style.display="none";
-preview.style.display="none";
-results.classList.remove("active");
-results.innerHTML="";
-search.value="";
-};
-
-/* CERRAR */
-window.cerrar=()=>modal.style.display="none";
-
-/* BUSCADOR + COMANDO BORRAR */
-search.oninput = (e)=>{
-const v=e.target.value.toLowerCase().trim();
-results.innerHTML="";
-
-if(v==="borrar"){
-btn-clean.style.display="block";
-results.classList.remove("active");
-return;
-}else{
-btn-clean.style.display="none";
-}
-
-if(!v){
-results.classList.remove("active");
-return;
-}
-
-const filtrados = dataUFs.filter(u=>
-u.Inquilino.toLowerCase().includes(v) ||
-u.UF.toString().includes(v)
-).slice(0,5);
-
-if(filtrados.length===0){
-results.classList.remove("active");
-return;
-}
-
-filtrados.forEach(u=>{
-const d=document.createElement("div");
-d.innerText=`UF ${u.UF} - ${u.Inquilino}`;
-
-d.onclick=()=>{
-selUF=u;
-card.style.display="block";
-ui-search.style.display="none";
-info-uf.innerText=d.innerText;
-results.classList.remove("active");
-};
-
-results.appendChild(d);
-});
-
-results.classList.add("active");
-};
-
-/* 🔥 BORRAR TODO FIREBASE */
-btn-clean.onclick = async ()=>{
-if(!confirm("⚠️ ¿Borrar TODAS las pruebas?")) return;
-
-const snap = await getDocs(collection(db,"reservas_salon"));
-
-for(const d of snap.docs){
-await deleteDoc(doc(db,"reservas_salon", d.id));
-}
-
-alert("🔥 Firebase limpio");
-location.reload();
-};
-
-/* FOTO */
-file-input.onchange=e=>{
-const f=e.target.files[0];
-if(!f)return;
-foto=f;
-
-const reader=new FileReader();
-reader.onload=ev=>{
-preview.src=ev.target.result;
-preview.style.display="block";
-};
-reader.readAsDataURL(f);
-};
-
-/* GUARDAR */
-btn-procesar.onclick=async()=>{
-if(!selUF) return alert("Elegí UF");
-
-loading.style.display="block";
-
-let url="";
-
-if(foto){
-const fd=new FormData();
-fd.append("file",foto);
-fd.append("upload_preset",UPLOAD_PRESET);
-
-try{
-const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
-method:"POST",
-body:fd
-});
-const d=await r.json();
-if(d.secure_url) url=d.secure_url;
-}catch(e){alert("Error imagen");}
-}
-
-const datos={
-fecha:window.fechaSel,
-fechaVisual:formatFecha(window.fechaSel),
-uf:selUF.UF,
-inquilino:selUF.Inquilino,
-comprobanteUrl:url
-};
-
-await addDoc(collection(db,"reservas_salon"),datos);
-
-const msg=`*RESERVA SUM*
-📅 ${formatFecha(window.fechaSel)}
-🏠 UF ${selUF.UF}
-👤 ${selUF.Inquilino}
-${url?"🔗 "+url:"Sin comprobante"}`;
-
-btn-wa.href=`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
-btn-wa.style.display="block";
-
-loading.style.display="none";
-alert("Guardado OK");
+ // ⚠️ Cloudinary requiere backend para borrar real
 };
 
 </script>
+
 </body>
 </html>
