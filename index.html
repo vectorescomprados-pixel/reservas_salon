@@ -12,19 +12,14 @@
         * { box-sizing: border-box; }
         :root { --bg: #0b141a; --card: #1c272e; --blue: #1d6ed7; --red: #e91e63; --green: #25d366; --text: #e9edef; --border: #2a3942; }
         body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow-x: hidden; }
-        
         .app-bar { background: #111b21; padding: 30px 10px 15px 10px; border-bottom: 3px solid var(--blue); text-align: center; }
         .app-bar h1 { margin: 5px 0 0 0; color: #fff; font-size: 22px; font-weight: 900; text-transform: uppercase; }
-        
         .container { width: 100%; padding: 10px; }
         #calendar { background: #111b21; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; padding: 10px; }
-        
-        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; padding: 5px !important; }
+        .fc-daygrid-day-number { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; text-decoration: none !important; }
         .fc-col-header-cell-cushion { color: #00d2ff !important; text-transform: uppercase; font-size: 11px; font-weight: 900; }
-
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(8px); }
-        .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 25px; border-radius: 28px; text-align: center; position: relative; border: 1px solid #32444e; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        
+        .modal-content { background: var(--card); width: 100%; max-width: 360px; padding: 25px; border-radius: 28px; text-align: center; position: relative; border: 1px solid #32444e; }
         .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; margin: 10px 0; text-align: center; font-size: 16px; }
         .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--blue); cursor: pointer; margin: 15px 0; font-size: 14px; font-weight: bold; }
         .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; font-size: 14px; }
@@ -32,17 +27,15 @@
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: #3d1c24; color: var(--red); border: 1px solid var(--red); }
         .btn-ghost { background: transparent; color: #8696a0; margin-top: 15px; }
-
-        .results-list { background: #111b21; border-radius: 12px; max-height: 180px; overflow-y: auto; margin-top: 5px; border: 1px solid var(--border); }
-        .result-item { padding: 15px; border-bottom: 1px solid #2a3942; text-align: left; color: white; font-size: 14px; }
-        
         #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; z-index: 100; font-weight: bold; }
+        .results-list { background: #111b21; border-radius: 12px; max-height: 180px; overflow-y: auto; border: 1px solid var(--border); }
+        .result-item { padding: 15px; border-bottom: 1px solid #2a3942; text-align: left; color: white; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● SEGURIDAD ACTIVA</div>
+    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● CONECTADO A CLOUDINARY</div>
     <h1>SUM PRO</h1>
 </div>
 
@@ -52,12 +45,8 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading-overlay">
-            <div style="font-size: 24px;">⏳</div>
-            COMPRIMIENDO Y SUBIENDO...
-        </div>
-
-        <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 22px; font-weight: 800;"></h3>
+        <div id="loading-overlay">⏳ COMPRIMIENDO...</div>
+        <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
             <input type="text" id="search-input" class="input-styled" placeholder="Buscar Unidad o Apellido...">
@@ -69,15 +58,15 @@
                 <span id="info-reserva" style="font-size:16px; font-weight: 800; color: #fff;"></span>
                 <div id="status-pago" style="font-size:12px; margin-top:5px; font-weight: bold;"></div>
             </div>
-            <button class="btn btn-red" onclick="abrirSeguridad()" style="margin-bottom: 10px;">Eliminar Reserva</button>
+            <button class="btn btn-red" onclick="abrirSeguridad()">Eliminar Reserva</button>
         </div>
 
         <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 15px; border: 1px solid var(--blue);">
-            <span id="label-uf" style="font-weight: 900; color: #fff; display: block; margin-bottom: 10px;"></span>
-            <label for="file-upload" class="file-label" id="file-status">📷 TOCAR PARA SUBIR COMPROBANTE</label>
+            <span id="label-uf" style="font-weight: 900; color: #fff; display: block; margin-bottom: 5px;"></span>
+            <label for="file-upload" class="file-label" id="file-status">📷 SUBIR COMPROBANTE</label>
             <input type="file" id="file-upload" accept="image/*" style="display:none">
             <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Reserva</button>
-            <button class="btn btn-green" id="btn-update-pago" style="display:none">Actualizar Comprobante</button>
+            <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
         </div>
 
         <button class="btn btn-ghost" onclick="closeM()">Volver</button>
@@ -101,7 +90,7 @@
     const UPLOAD_PRESET = "ml_default"; 
     const MASTER_KEY = "1131552679"; 
 
-    const firebaseConfig = { 
+    const config = { 
         apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", 
         authDomain: "gestionuf-remoto.firebaseapp.com", 
         projectId: "gestionuf-remoto", 
@@ -110,7 +99,7 @@
         appId: "1:724452752860:web:4d25585addcdcbd146e319" 
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(config);
     const db = getFirestore(app);
     const formatFechaLegible = (f) => f ? f.split('-').reverse().join('-') : "";
 
@@ -131,7 +120,7 @@
 
     fileInput.addEventListener('change', (e) => {
         if(e.target.files.length > 0) {
-            fileStatus.innerText = "✅ IMAGEN CARGADA";
+            fileStatus.innerText = "✅ IMAGEN LISTA";
             fileStatus.style.color = "var(--green)";
             fileStatus.style.borderColor = "var(--green)";
         }
@@ -160,12 +149,11 @@
         document.getElementById('m-date').innerText = formatFechaLegible(fecha);
         document.getElementById('search-input').value = ''; 
         fileInput.value = '';
-        fileStatus.innerText = "📷 TOCAR PARA SUBIR COMPROBANTE";
+        fileStatus.innerText = "📷 SUBIR COMPROBANTE";
         fileStatus.style.color = "#00d2ff";
         fileStatus.style.borderColor = "var(--blue)";
         
         const res = reservas.find(r => r.fecha === fecha);
-        
         if(res) {
             window.currentResId = res.id;
             selUF = { uf: res.uf, inquilino: res.inquilino };
@@ -174,7 +162,7 @@
             document.getElementById('info-reserva').innerText = `UF ${res.uf} - ${res.inquilino}`;
             document.getElementById('status-pago').innerText = res.pago === 'Pagado' ? '✅ PAGO REGISTRADO' : '⚠️ PAGO PENDIENTE';
             document.getElementById('selection-card').style.display = 'block';
-            document.getElementById('label-uf').innerText = "ACTUALIZAR DATOS";
+            document.getElementById('label-uf').innerText = "OPCIONES DE PAGO";
             document.getElementById('btn-confirm').style.display = 'none';
             document.getElementById('btn-update-pago').style.display = 'block';
         } else {
@@ -188,11 +176,11 @@
         document.getElementById('modal').style.display = 'flex';
     }
 
-    async function subirYComprimir(file) {
+    async function procesarImagen(file) {
         const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1024, useWebWorker: true };
-        const compressedFile = await imageCompression(file, options);
+        const compressed = await imageCompression(file, options);
         const formData = new FormData();
-        formData.append('file', compressedFile);
+        formData.append('file', compressed);
         formData.append('upload_preset', UPLOAD_PRESET);
         const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
         const data = await res.json();
@@ -202,31 +190,28 @@
 
     document.getElementById('btn-confirm').onclick = async () => {
         if(!selUF) return;
-        let fotoUrl = "";
+        let url = "";
         if(fileInput.files) {
             loading.style.display = "flex";
-            try { fotoUrl = await subirYComprimir(fileInput.files); } 
-            catch(e) { alert("Error imagen: " + e.message); loading.style.display="none"; return; }
+            try { url = await procesarImagen(fileInput.files); } catch(e) { alert(e.message); loading.style.display="none"; return; }
         }
         await addDoc(collection(db, "reservas_salon"), { 
             fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
-            comprobanteUrl: fotoUrl || "", pago: fotoUrl ? "Pagado" : "Pendiente"
+            comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente"
         });
-        let msg = `*RESERVA SUM*%0AFecha: ${formatFechaLegible(window.selectedDate)}%0AUF: ${selUF.uf}`;
-        if(fotoUrl) msg += `%0A%0A✅ *Comprobante:* ${fotoUrl}`;
-        window.open(`https://wa.me/549${MASTER_KEY}?text=${msg}`);
+        window.open(`https://wa.me/549${MASTER_KEY}?text=*NUEVA RESERVA*%0AUF: ${selUF.uf}%0AFecha: ${formatFechaLegible(window.selectedDate)}${url ? '%0AComprobante: '+url : ''}`);
         closeM();
     };
 
     document.getElementById('btn-update-pago').onclick = async () => {
-        if(!fileInput.files) { alert("Seleccioná una foto"); return; }
+        if(!fileInput.files) { alert("Seleccioná una imagen"); return; }
         loading.style.display = "flex";
         try {
-            const fotoUrl = await subirYComprimir(fileInput.files);
-            await updateDoc(doc(db, "reservas_salon", window.currentResId), { comprobanteUrl: fotoUrl, pago: "Pagado" });
-            window.open(`https://wa.me/549${MASTER_KEY}?text=*PAGO ACTUALIZADO*%0AUF: ${selUF.uf}%0ALink: ${fotoUrl}`);
+            const url = await procesarImagen(fileInput.files);
+            await updateDoc(doc(db, "reservas_salon", window.currentResId), { comprobanteUrl: url, pago: "Pagado" });
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*PAGO RECIBIDO*%0AUF: ${selUF.uf}%0ALink: ${url}`);
             closeM();
-        } catch(e) { alert("Error"); loading.style.display="none"; }
+        } catch(e) { alert(e.message); loading.style.display="none"; }
     };
 
     document.getElementById('search-input').addEventListener('input', (e) => {
@@ -234,20 +219,19 @@
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = '';
         if(val.length < 1) { resultsDiv.style.display = 'none'; return; }
-        let filtered = dataUFs.filter(i => i.inquilino.toLowerCase().includes(val) || i.uf.toString().includes(val));
-        filtered.forEach(item => {
+        dataUFs.filter(i => i.inquilino.toLowerCase().includes(val) || i.uf.toString().includes(val)).forEach(item => {
             const d = document.createElement('div');
             d.className = 'result-item';
             d.innerHTML = `<b>UF ${item.uf}</b> - ${item.inquilino}`;
             d.onclick = () => {
                 selUF = item;
                 document.getElementById('selection-card').style.display = 'block';
-                document.getElementById('label-uf').innerText = `SELECCIONADO: UF ${item.uf}`;
+                document.getElementById('label-uf').innerText = `UF ${item.uf}`;
                 resultsDiv.style.display = 'none';
             };
             resultsDiv.appendChild(d);
         });
-        resultsDiv.style.display = filtered.length > 0 ? 'block' : 'none';
+        resultsDiv.style.display = 'block';
     });
 
     window.abrirSeguridad = () => document.getElementById('modal-seguridad').style.display = 'flex';
@@ -255,11 +239,10 @@
     document.getElementById('btn-autorizar').onclick = async () => {
         if(document.getElementById('admin-pass').value === MASTER_KEY) {
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
-            window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA ELIMINADA*%0AUF: ${selUF.uf}%0AFecha: ${formatFechaLegible(window.selectedDate)}`);
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*ELIMINADO*%0AUF: ${selUF.uf}`);
             cerrarSeguridad(); closeM();
         } else { alert("Clave incorrecta"); }
     };
-
     window.closeM = () => { document.getElementById('modal').style.display = 'none'; loading.style.display = "none"; }
     init();
 </script>
