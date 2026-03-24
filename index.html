@@ -24,13 +24,13 @@
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: #3d1c24; color: var(--red); border: 1px solid var(--red); }
         .btn-ghost { background: transparent; color: #8696a0; margin-top: 15px; }
-        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; z-index: 100; font-weight: bold; }
+        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.95); border-radius: 28px; color: white; flex-direction: column; align-items: center; justify-content: center; z-index: 100; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="app-bar">
-    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● MODO ULTRA-COMPATIBLE</div>
+    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● CONEXIÓN REFORZADA</div>
     <h1>SUM PRO</h1>
 </div>
 
@@ -40,7 +40,7 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading-overlay">⏳ SUBIENDO...<br><small>No cierres la app</small></div>
+        <div id="loading-overlay">⏳ SUBIENDO...<br><small>Por favor, espera</small></div>
         <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px;"></h3>
         
         <div id="ui-crear">
@@ -58,7 +58,7 @@
 
         <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 15px; border: 1px solid var(--blue);">
             <span id="label-uf" style="font-weight: 900; color: #fff; display: block;"></span>
-            <label for="file-upload" class="file-label" id="file-status">📷 ELEGIR FOTO</label>
+            <label for="file-upload" class="file-label" id="file-status">📷 ELEGIR COMPROBANTE</label>
             <input type="file" id="file-upload" accept="image/*" style="display:none">
             <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Reserva</button>
             <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
@@ -90,6 +90,7 @@
     const MASTER_KEY = "1131552679"; 
 
     let dataUFs = []; let reservas = []; let selUF = null;
+    let fotoSeleccionada = null; // VARIABLE GLOBAL PARA LA FOTO
 
     async function init() {
         const snap = await getDocs(collection(db, "departamentos"));
@@ -100,11 +101,13 @@
     const fileStatus = document.getElementById('file-status');
     const loading = document.getElementById('loading-overlay');
 
+    // CAPTURA INMEDIATA DE LA FOTO
     fileInput.onchange = (e) => {
-        if(e.target.files.length > 0) {
-            fileStatus.innerText = "✅ FOTO LISTA";
+        if(e.target.files && e.target.files) {
+            fotoSeleccionada = e.target.files; // Guardamos el archivo REAL, no la lista
+            fileStatus.innerText = "✅ FOTO CARGADA";
             fileStatus.style.color = "#25d366";
-            fileStatus.style.borderColor = "#25d366";
+            console.log("Archivo capturado:", fotoSeleccionada.name);
         }
     };
 
@@ -124,7 +127,8 @@
         window.selectedDate = fecha;
         document.getElementById('m-date').innerText = fecha.split('-').reverse().join('-');
         fileInput.value = ""; 
-        fileStatus.innerText = "📷 ELEGIR FOTO"; 
+        fotoSeleccionada = null;
+        fileStatus.innerText = "📷 ELEGIR COMPROBANTE"; 
         fileStatus.style.color = "#00d2ff";
         
         const res = reservas.find(r => r.fecha === fecha);
@@ -147,68 +151,52 @@
         document.getElementById('modal').style.display = 'flex';
     }
 
-    // NUEVA FUNCIÓN DE SUBIDA (MÁS ROBUSTA)
-    function subirFoto() {
-        return new Promise((resolve, reject) => {
-            if (!fileInput.files) {
-                resolve("");
-                return;
-            }
+    // FUNCIÓN DE SUBIDA SIN INTERMEDIARIOS
+    async function enviarCloudinary() {
+        if (!fotoSeleccionada) return "";
+        
+        loading.style.display = "flex";
+        const formData = new FormData();
+        formData.append('file', fotoSeleccionada);
+        formData.append('upload_preset', UPLOAD_PRESET);
 
-            loading.style.display = "flex";
-            const formData = new FormData();
-            formData.append('file', fileInput.files);
-            formData.append('upload_preset', UPLOAD_PRESET);
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, true);
-
-            xhr.onload = function() {
-                loading.style.display = "none";
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve(response.secure_url);
-                } else {
-                    alert("Error en la subida: " + xhr.responseText);
-                    reject("Error de servidor");
-                }
-            };
-
-            xhr.onerror = function() {
-                loading.style.display = "none";
-                alert("Error de conexión");
-                reject("Error de red");
-            };
-
-            xhr.send(formData);
-        });
+        try {
+            const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.secure_url) return data.secure_url;
+            throw new Error(data.error ? data.error.message : "Error desconocido");
+        } catch (err) {
+            alert("Error: " + err.message);
+            return "";
+        } finally {
+            loading.style.display = "none";
+        }
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
         if(!selUF) return;
-        try {
-            const url = await subirFoto();
-            await addDoc(collection(db, "reservas_salon"), { 
-                fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
-                comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente" 
-            });
-            window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AUF: ${selUF.uf}%0AFecha: ${window.selectedDate}${url ? '%0ALink: '+url : ''}`);
-            closeM();
-        } catch(e) {}
+        const url = await enviarCloudinary();
+        await addDoc(collection(db, "reservas_salon"), { 
+            fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
+            comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente" 
+        });
+        window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AUF: ${selUF.uf}%0AFecha: ${window.selectedDate}${url ? '%0ALink: '+url : ''}`);
+        closeM();
     };
 
     document.getElementById('btn-update-pago').onclick = async () => {
-        if(!fileInput.files) { alert("Seleccioná la foto primero"); return; }
-        try {
-            const url = await subirFoto();
-            if(url) {
-                await updateDoc(doc(db, "reservas_salon", window.currentResId), { 
-                    comprobanteUrl: url, pago: "Pagado" 
-                });
-                window.open(`https://wa.me/549${MASTER_KEY}?text=*PAGO ACTUALIZADO*%0AUF: ${selUF.uf}%0ALink: ${url}`);
-                closeM();
-            }
-        } catch(e) {}
+        if(!fotoSeleccionada) { alert("Primero selecciona la foto"); return; }
+        const url = await enviarCloudinary();
+        if(url) {
+            await updateDoc(doc(db, "reservas_salon", window.currentResId), { 
+                comprobanteUrl: url, pago: "Pagado" 
+            });
+            window.open(`https://wa.me/549${MASTER_KEY}?text=*PAGO ACTUALIZADO*%0AUF: ${selUF.uf}%0ALink: ${url}`);
+            closeM();
+        }
     };
 
     document.getElementById('search-input').oninput = (e) => {
