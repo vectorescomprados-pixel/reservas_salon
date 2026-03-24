@@ -3,21 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO</title>
+    <title>SUM PRO - Gestión</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; background: #0b141a; color: #fff; font-family: sans-serif; }
+        body { margin: 0; background: #0b141a; color: #fff; font-family: sans-serif; overflow-x: hidden; }
         .container { padding: 10px; }
         #calendar { background: #111; border-radius: 12px; padding: 10px; border: 1px solid #2a3942; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
-        .modal-content { background: #1c272e; padding: 25px; border-radius: 20px; width: 100%; max-width: 350px; text-align: center; }
-        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #2a3942; background: #222; color: #fff; text-align: center; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(5px); }
+        .modal-content { background: #1c272e; padding: 20px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border: 1px solid #32444e; }
+        .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #2a3942; background: #222; color: #fff; text-align: center; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; transition: 0.3s; }
         .blue { background: #1d6ed7; color: #fff; }
         .green { background: #25d366; color: #fff; }
         #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
-        #loading { display: none; margin: 10px 0; color: #1d6ed7; font-weight: bold; }
+        #loading { display: none; margin: 10px 0; color: #00d2ff; font-weight: bold; }
+        #preview { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; margin: 10px auto; display: none; border: 2px solid #1d6ed7; }
     </style>
 </head>
 <body>
@@ -26,25 +27,28 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="fecha-label" style="margin-top:0"></h3>
-        <div id="loading">⏳ SUBIENDO FOTO...</div>
+        <h3 id="fecha-label" style="margin:0 0 10px 0; color:#8696a0;"></h3>
+        <div id="loading">⏳ PROCESANDO IMAGEN...</div>
         
         <div id="ui-search">
             <input id="search" class="input" placeholder="Buscar Unidad o Nombre">
-            <div id="results" style="max-height: 150px; overflow-y: auto;"></div>
+            <div id="results" style="max-height: 120px; overflow-y: auto;"></div>
         </div>
 
         <div id="card" style="display:none">
-            <p id="info-uf" style="font-weight: bold; color: #1d6ed7; font-size: 18px;"></p>
-            <label for="file-input" style="display:block; padding:15px; border:2px dashed #1d6ed7; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff">
-                📷 <span id="file-text">ELEGIR FOTO</span>
+            <p id="info-uf" style="font-weight: bold; color: #1d6ed7; font-size: 18px; margin: 10px 0;"></p>
+            
+            <img id="preview" alt="Vista previa">
+
+            <label for="file-input" style="display:block; padding:12px; border:2px dashed #1d6ed7; border-radius:10px; cursor:pointer; margin:10px 0; color:#00d2ff; font-size: 13px;">
+                📷 <span id="file-text">SUBIR COMPROBANTE</span>
             </label>
             <input type="file" id="file-input" accept="image/*" style="display:none">
 
-            <button id="btn-procesar" class="btn blue">GUARDAR Y GENERAR LINK</button>
-            <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
+            <button id="btn-procesar" class="btn blue">1. GUARDAR EN SISTEMA</button>
+            <a id="btn-wa" class="btn green" style="display:none" target="_blank">2. ENVIAR WHATSAPP ✅</a>
         </div>
-        <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cerrar</button>
+        <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
     </div>
 </div>
 
@@ -52,11 +56,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app = initializeApp({ apiKey: "AIzaSyDx...", authDomain: "gestionuf-remoto.firebaseapp.com", projectId: "gestionuf-remoto" });
+const config = { apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo", authDomain: "gestionuf-remoto.firebaseapp.com", projectId: "gestionuf-remoto" };
+const app = initializeApp(config);
 const db = getFirestore(app);
 
 const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "5491131552679";
-let dataUFs = [], reservas = [], selUF = null, foto = null, modoReserva = true;
+let dataUFs = [], reservas = [], selUF = null, fotoBlob = null, modoReserva = true;
 
 async function init(){
     const snap = await getDocs(collection(db,"departamentos"));
@@ -79,12 +84,13 @@ onSnapshot(collection(db,"reservas_salon"), snap => {
 });
 
 function abrir(fecha){
-    selUF = null; foto = null; window.fechaSel = fecha;
+    selUF = null; fotoBlob = null; window.fechaSel = fecha;
     document.getElementById('fecha-label').innerText = fecha.split('-').reverse().join('/');
     document.getElementById('modal').style.display = "flex";
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
-    document.getElementById('file-text').innerText = "ELEGIR FOTO";
+    document.getElementById('preview').style.display = "none";
+    document.getElementById('file-text').innerText = "SUBIR COMPROBANTE";
     document.getElementById('btn-wa').style.display = "none";
     document.getElementById('btn-procesar').style.display = "flex";
     document.getElementById('file-input').value = "";
@@ -101,26 +107,60 @@ function abrir(fecha){
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// 🔥 CORRECCIÓN 1: Capturar el archivo
+// 🔥 COMPRESIÓN DE IMAGEN ANTES DE SUBIR
 document.getElementById('file-input').onchange = (e) => {
-    if(e.target.files.length > 0){
-        foto = e.target.files; 
-        document.getElementById('file-text').innerText = "✅ FOTO LISTA";
-    }
+    const file = e.target.files;
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1000;
+            let width = img.width, height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convertimos a Blob (formato archivo) con calidad 0.7
+            canvas.toBlob((blob) => {
+                fotoBlob = blob;
+                const preview = document.getElementById('preview');
+                preview.src = URL.createObjectURL(blob);
+                preview.style.display = "block";
+                document.getElementById('file-text').innerText = "✅ IMAGEN LISTA";
+            }, 'image/jpeg', 0.7);
+        };
+    };
 };
 
 async function subirCloudinary(){
-    if(!foto) return "";
+    if(!fotoBlob) return "";
     document.getElementById('loading').style.display = "block";
     const fd = new FormData();
-    fd.append("file", foto);
+    fd.append("file", fotoBlob);
     fd.append("upload_preset", UPLOAD_PRESET);
+    
     try {
         const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
         const data = await r.json();
-        return data.secure_url || "";
-    } catch (e) { alert("Error en subida"); return "error"; }
-    finally { document.getElementById('loading').style.display = "none"; }
+        if(!data.secure_url) throw new Error("Error en respuesta Cloudinary");
+        return data.secure_url;
+    } catch (e) { 
+        console.error(e);
+        return "error"; 
+    } finally { 
+        document.getElementById('loading').style.display = "none"; 
+    }
 }
 
 document.getElementById('search').oninput = (e) => {
@@ -142,31 +182,35 @@ document.getElementById('search').oninput = (e) => {
 
 document.getElementById('btn-procesar').onclick = async () => {
     if(!selUF) return alert("Selecciona UF");
-    
-    // 🔥 CORRECCIÓN 2: Esperar la URL real
-    const urlLink = await subirCloudinary();
-    if(urlLink === "error") return;
 
-    let msj = "";
+    // 1. Subida segura
+    const urlFinal = await subirCloudinary();
+    if(urlFinal === "error") return alert("Fallo la subida de imagen. Intenta de nuevo.");
+
     try {
+        let msj = "";
         if(modoReserva) {
             await addDoc(collection(db,"reservas_salon"), { 
-                fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: urlLink 
+                fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: urlFinal 
             });
-            msj = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fechaSel}\nLink: ${urlLink}`;
+            msj = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fechaSel}\nLink: ${urlFinal}`;
         } else {
-            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlLink });
-            msj = `*PAGO SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${urlLink}`;
+            await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: urlFinal });
+            msj = `*PAGO SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${urlFinal}`;
         }
 
-        // 🔥 CORRECCIÓN 3: Inyectar el link en el botón de WhatsApp
+        // 2. Blindaje de Link: Verificamos que no sea vacío
+        if(urlFinal === "") return alert("Error: Link no generado.");
+
         const btnWA = document.getElementById('btn-wa');
         btnWA.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msj)}`;
         btnWA.style.display = "flex";
         document.getElementById('btn-procesar').style.display = "none";
         
-        alert("✅ PROCESADO. Toca el botón verde.");
-    } catch(err) { alert("Error Firebase: " + err.message); }
+        alert("✅ PROCESADO. Toca el botón de WhatsApp.");
+    } catch(err) { 
+        alert("Error en base de datos: " + err.message); 
+    }
 };
 </script>
 </body>
