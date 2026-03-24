@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>SUM PRO - Versión Blindada</title>
+    <title>SUM PRO - Versión Final Producción</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
@@ -14,6 +14,7 @@
         .modal-content { background: #1c272e; padding: 20px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border: 1px solid #32444e; }
         .input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #2a3942; background: #222e35; color: #fff; text-align: center; font-size: 16px; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; margin-top: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; transition: 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .blue { background: #00a884; color: #fff; }
         .green { background: #25d366; color: #fff; }
         #results { background: #222e35; border-radius: 10px; max-height: 120px; overflow-y: auto; margin-top: -5px; }
@@ -44,7 +45,7 @@
             <button id="btn-procesar" class="btn blue">GUARDAR DATOS</button>
             <a id="btn-wa" class="btn green" style="display:none" target="_blank">ENVIAR WHATSAPP ✅</a>
         </div>
-        <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
+        <button id="btn-cancelar" class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cancelar</button>
     </div>
 </div>
 
@@ -85,10 +86,13 @@ window.abrir = (fecha) => {
     document.getElementById('modal').style.display = "flex";
     document.getElementById('ui-search').style.display = "block";
     document.getElementById('card').style.display = "none";
-    document.getElementById('preview').style.display = "none";
-    document.getElementById('preview').src = "";
+    const preview = document.getElementById('preview');
+    if (preview.src) URL.revokeObjectURL(preview.src); // ✅ FIX: Revoke memory leak
+    preview.style.display = "none";
+    preview.src = "";
     document.getElementById('btn-wa').style.display = "none";
     document.getElementById('btn-procesar').style.display = "flex";
+    document.getElementById('btn-procesar').disabled = false;
     document.getElementById('file-input').value = "";
     document.getElementById('file-text').innerText = "SUBIR COMPROBANTE";
 
@@ -108,22 +112,25 @@ window.abrir = (fecha) => {
 
 window.cerrar = () => document.getElementById('modal').style.display = "none";
 
-// 🛠 MANEJO DE IMAGEN CORREGIDO (Fix files y Race Condition)
+// 🛠 MANEJO DE IMAGEN NIVEL PRO
 document.getElementById('file-input').onchange = function(e) {
-    const file = e.target.files; // ✅ FIX 1: Acceso correcto
+    const file = e.target.files; // ✅ FIX 1: file, no FileList
     if (!file) return;
+
+    // ✅ FIX 2: Validaciones de archivo
+    if (!file.type.startsWith("image/")) return alert("Solo imágenes");
+    if (file.size > 10 * 1024 * 1024) return alert("Máximo 10MB");
     
     procesado = false;
     const label = document.getElementById('file-text');
-    label.innerText = "⏳ PROCESANDO...";
+    label.innerText = "⏳ ACHICANDO...";
     
-    // ✅ FIX 2: Race condition control con Flag
     const timeout = setTimeout(() => {
         if (!procesado) {
-            fotoBlob = file;
+            fotoBlob = file; // Fallback al original
             label.innerText = "✅ LISTO (Original)";
         }
-    }, 3000);
+    }, 4000);
 
     const reader = new FileReader();
     reader.onload = function(event) {
@@ -131,7 +138,7 @@ document.getElementById('file-input').onchange = function(e) {
         img.onload = function() {
             try {
                 const canvas = document.createElement('canvas');
-                const max = 800;
+                const max = 1000;
                 let w = img.width, h = img.height;
                 if (w > h) { if (w > max) { h *= max / w; w = max; } }
                 else { if (h > max) { w *= max / h; h = max; } }
@@ -139,13 +146,22 @@ document.getElementById('file-input').onchange = function(e) {
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 
                 canvas.toBlob((blob) => {
-                    procesado = true; // ✅ FIX Flag
+                    procesado = true;
                     clearTimeout(timeout);
-                    fotoBlob = blob;
-                    document.getElementById('preview').src = URL.createObjectURL(blob);
-                    document.getElementById('preview').style.display = "block";
-                    label.innerText = "✅ IMAGEN LISTA";
-                }, 'image/jpeg', 0.7);
+                    
+                    const preview = document.getElementById('preview');
+                    if (preview.src) URL.revokeObjectURL(preview.src); // ✅ FIX: No Memory Leak
+
+                    if (!blob) { // ✅ FIX 3: Blob null check
+                        fotoBlob = file;
+                        label.innerText = "⚠️ Original";
+                    } else {
+                        fotoBlob = blob;
+                        preview.src = URL.createObjectURL(blob);
+                        preview.style.display = "block";
+                        label.innerText = "✅ IMAGEN LISTA";
+                    }
+                }, 'image/jpeg', 0.8);
             } catch (err) { 
                 fotoBlob = file; 
                 label.innerText = "✅ LISTO";
@@ -175,12 +191,13 @@ document.getElementById('search').oninput = (e) => {
 
 document.getElementById('btn-procesar').onclick = async () => {
     if(!selUF) return alert("Elegí una unidad");
-
-    // ✅ FIX 5: Validación UX
     if(!fotoBlob && !confirm("¿Continuar sin comprobante?")) return;
 
     const btn = document.getElementById('btn-procesar');
     const load = document.getElementById('loading');
+    
+    // ✅ FIX 4: Double Click Protection
+    btn.disabled = true;
     btn.style.display = "none";
     load.style.display = "block";
 
@@ -192,13 +209,11 @@ document.getElementById('btn-procesar').onclick = async () => {
         try {
             const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
             const d = await r.json();
-            
-            // ✅ FIX 3: Validación de Cloudinary
-            if(!d.secure_url) throw new Error("Error en la subida a la nube");
+            if(!d.secure_url) throw new Error("Cloudinary rejected upload"); // ✅ FIX 5: Cloudinary Validation
             url = d.secure_url;
-            
         } catch(e) { 
-            alert("❌ Falló la imagen: " + e.message);
+            alert("❌ Error de subida: " + e.message);
+            btn.disabled = false;
             btn.style.display = "flex";
             load.style.display = "none";
             return;
@@ -206,15 +221,15 @@ document.getElementById('btn-procesar').onclick = async () => {
     }
 
     try {
-        let msj = "";
         const payload = { fecha: window.fechaSel, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url };
+        let msj = "";
 
         if(modoReserva) {
             await addDoc(collection(db,"reservas_salon"), payload);
-            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Link: ${url}` : ''}`;
+            msj = `*NUEVA RESERVA SUM*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Comprobante: ${url}` : ''}`;
         } else {
             await updateDoc(doc(db, "reservas_salon", window.idReserva), { comprobanteUrl: url });
-            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}${url ? `\n🔗 Link: ${url}` : ''}`;
+            msj = `*PAGO SUM ACTUALIZADO*\n📍 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n📅 Fecha: ${window.fechaSel}${url ? `\n🔗 Comprobante: ${url}` : ''}`;
         }
 
         const btnWA = document.getElementById('btn-wa');
@@ -224,8 +239,8 @@ document.getElementById('btn-procesar').onclick = async () => {
         alert("✅ GUARDADO EXITOSO");
 
     } catch(err) {
-        // ✅ FIX 4: Limpieza de UI en error
         alert("❌ Error Firebase: " + err.message);
+        btn.disabled = false;
         btn.style.display = "flex";
         load.style.display = "none";
     }
