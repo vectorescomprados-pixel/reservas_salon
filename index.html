@@ -21,7 +21,7 @@
         .blue { background: var(--blue); color: white; }
         .green { background: var(--green); color: white; }
         #results div { padding: 12px; border-bottom: 1px solid #2a3942; cursor: pointer; text-align: left; }
-        #loading { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8); border-radius: 28px; color: #fff; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        #loading { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); border-radius: 28px; color: #fff; flex-direction: column; align-items: center; justify-content: center; z-index: 20; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -31,7 +31,7 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading">⏳ SUBIENDO FOTO...</div>
+        <div id="loading">⏳ PROCESANDO...<br>No cierres la ventana</div>
         <h3 id="fecha-label" style="margin:0 0 15px 0;"></h3>
         
         <div id="ui-search">
@@ -40,12 +40,14 @@
         </div>
 
         <div id="card" style="display:none; margin-top: 15px;">
-            <p id="info" style="font-weight: bold; color: var(--blue);"></p>
+            <p id="info" style="font-weight: bold; color: var(--blue); margin-bottom: 5px;"></p>
             <label for="file" class="file-label" id="fileText">📷 ELEGIR COMPROBANTE</label>
             <input type="file" id="file" accept="image/*" style="display:none">
             
             <button id="btnReserva" class="btn blue">Confirmar Reserva</button>
             <button id="btnPago" class="btn green" style="display:none">Enviar Comprobante</button>
+            
+            <a id="btnWA_Manual" class="btn green" style="display:none; text-decoration:none; align-items:center; justify-content:center;">REINTENTAR WHATSAPP</a>
         </div>
         <button class="btn" style="background:transparent; color:#8696a0" onclick="cerrar()">Cerrar</button>
     </div>
@@ -63,8 +65,13 @@ const CLOUD_NAME = "dhryws88e", UPLOAD_PRESET = "ml_default", PHONE = "549113155
 let dataUFs = [], reservas = [], selUF = null, foto = null;
 
 async function init(){
-    const snap = await getDocs(collection(db,"departamentos"));
-    dataUFs = snap.docs.map(d => ({ UF: d.data().UF || d.data().Unidad, Inquilino: d.data().Inquilino || "Sin Nombre" }));
+    try {
+        const snap = await getDocs(collection(db,"departamentos"));
+        dataUFs = snap.docs.map(d => ({ 
+            UF: d.data().UF || d.data().Unidad, 
+            Inquilino: d.data().Inquilino || "Sin Nombre" 
+        }));
+    } catch(e) { console.error("Error inicial", e); }
 }
 init();
 
@@ -90,6 +97,7 @@ function abrir(fecha){
     document.getElementById('card').style.display = "none";
     document.getElementById('fileText').innerText = "📷 ELEGIR COMPROBANTE";
     document.getElementById('file').value = "";
+    document.getElementById('btnWA_Manual').style.display = "none";
 
     const res = reservas.find(r => r.fecha === fecha);
     if(res) {
@@ -107,8 +115,9 @@ window.cerrar = () => document.getElementById('modal').style.display = "none";
 
 document.getElementById('file').onchange = (e) => {
     if(e.target.files.length > 0){
-        foto = e.target.files; // 🔥 FIX APLICADO
+        foto = e.target.files;
         document.getElementById('fileText').innerText = "✅ ARCHIVO LISTO";
+        document.getElementById('fileText').style.color = "var(--green)";
     }
 };
 
@@ -145,25 +154,46 @@ document.getElementById('search').oninput = (e) => {
     });
 };
 
-function enviarWA(txt){
-    const url = `https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}`;
-    window.open(url, '_blank'); // 🔥 Abrir en pestaña nueva para no romper el flujo
+function generarLinkWA(txt){
+    return `https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}`;
 }
 
 document.getElementById('btnReserva').onclick = async () => {
     const url = await subir();
     if(url === "error") return;
-    await addDoc(collection(db,"reservas_salon"), { fecha: window.fecha, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url });
-    enviarWA(`*NUEVA RESERVA*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fecha}\nLink: ${url}`);
-    cerrar();
+    
+    try {
+        await addDoc(collection(db,"reservas_salon"), { fecha: window.fecha, uf: selUF.UF, inquilino: selUF.Inquilino, comprobanteUrl: url });
+        const txt = `*NUEVA RESERVA SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nFecha: ${window.fecha}\nLink: ${url}`;
+        
+        // Intento abrir WA
+        const link = generarLinkWA(txt);
+        window.open(link, '_blank');
+        
+        // Mostrar botón manual por si falló el popup
+        document.getElementById('btnWA_Manual').href = link;
+        document.getElementById('btnWA_Manual').style.display = "flex";
+        document.getElementById('btnReserva').style.display = "none";
+        alert("✅ RESERVA GUARDADA EN SISTEMA");
+    } catch(err) { alert("Error Firebase: " + err.message); }
 };
 
 document.getElementById('btnPago').onclick = async () => {
     const url = await subir();
     if(url === "error" || !url) return;
-    await updateDoc(doc(db, "reservas_salon", window.id), { comprobanteUrl: url });
-    enviarWA(`*COMPROBANTE RECIBIDO*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${url}`);
-    cerrar();
+    
+    try {
+        await updateDoc(doc(db, "reservas_salon", window.id), { comprobanteUrl: url });
+        const txt = `*COMPROBANTE SUM*\nUF: ${selUF.UF}\nInquilino: ${selUF.Inquilino}\nLink: ${url}`;
+        
+        const link = generarLinkWA(txt);
+        window.open(link, '_blank');
+        
+        document.getElementById('btnWA_Manual').href = link;
+        document.getElementById('btnWA_Manual').style.display = "flex";
+        document.getElementById('btnPago').style.display = "none";
+        alert("✅ PAGO ACTUALIZADO");
+    } catch(err) { alert("Error Firebase: " + err.message); }
 };
 </script>
 </body>
