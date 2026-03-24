@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
     <title>SUM PRO - Gestión</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 
     <style>
         * { box-sizing: border-box; }
@@ -21,6 +20,7 @@
         .input-styled { width: 100%; height: 50px; background: #222e35; border: 1px solid #32444e; border-radius: 12px; color: white; padding: 0 15px; margin: 10px 0; text-align: center; }
         .file-label { display: block; background: #2a3942; color: #00d2ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--blue); cursor: pointer; margin: 15px 0; font-size: 14px; font-weight: bold; }
         .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: #3d1c24; color: var(--red); border: 1px solid var(--red); }
@@ -31,7 +31,7 @@
 <body>
 
 <div class="app-bar">
-    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● SISTEMA OPTIMIZADO</div>
+    <div style="color: #25d366; font-size: 10px; font-weight: bold;">● MODO COMPATIBLE ACTIVO</div>
     <h1>SUM PRO</h1>
 </div>
 
@@ -41,7 +41,7 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <div id="loading-overlay">⏳ PROCESANDO...</div>
+        <div id="loading-overlay">⏳ SUBIENDO A LA NUBE...</div>
         <h3 id="m-date" style="margin:0 0 15px 0; color:#fff; font-size: 20px; font-weight: 800;"></h3>
         
         <div id="ui-crear">
@@ -59,7 +59,7 @@
 
         <div id="selection-card" style="display:none; margin: 15px 0; padding: 15px; background: rgba(29,110,215,0.1); border-radius: 15px; border: 1px solid var(--blue);">
             <span id="label-uf" style="font-weight: 900; color: #fff; display: block;"></span>
-            <label for="file-upload" class="file-label" id="file-status">📷 SUBIR COMPROBANTE</label>
+            <label for="file-upload" class="file-label" id="file-status">📷 SELECCIONAR FOTO</label>
             <input type="file" id="file-upload" accept="image/*" style="display:none">
             <button class="btn btn-blue" id="btn-confirm" style="display:none">Confirmar Reserva</button>
             <button class="btn btn-green" id="btn-update-pago" style="display:none">Enviar Comprobante</button>
@@ -99,11 +99,15 @@
     const fileInput = document.getElementById('file-upload');
     const fileStatus = document.getElementById('file-status');
     const loading = document.getElementById('loading-overlay');
+    const btnUpdate = document.getElementById('btn-update-pago');
+    const btnConfirm = document.getElementById('btn-confirm');
 
     fileInput.onchange = () => {
-        if(fileInput.files) {
-            fileStatus.innerText = "✅ IMAGEN CARGADA";
+        if(fileInput.files.length > 0) {
+            fileStatus.innerText = "✅ FOTO LISTA";
             fileStatus.style.color = "var(--green)";
+            btnUpdate.disabled = false;
+            btnConfirm.disabled = false;
         }
     };
 
@@ -122,7 +126,10 @@
     function abrir(fecha) {
         window.selectedDate = fecha;
         document.getElementById('m-date').innerText = fecha.split('-').reverse().join('-');
-        fileInput.value = ""; fileStatus.innerText = "📷 SUBIR COMPROBANTE"; fileStatus.style.color = "#00d2ff";
+        fileInput.value = ""; 
+        fileStatus.innerText = "📷 SELECCIONAR FOTO"; 
+        fileStatus.style.color = "#00d2ff";
+        
         const res = reservas.find(r => r.fecha === fecha);
         if(res) {
             window.currentResId = res.id; selUF = { uf: res.uf, inquilino: res.inquilino };
@@ -133,43 +140,53 @@
             document.getElementById('selection-card').style.display = 'block';
             document.getElementById('btn-confirm').style.display = 'none';
             document.getElementById('btn-update-pago').style.display = 'block';
+            btnUpdate.disabled = true; // Bloqueado hasta elegir foto
         } else {
             document.getElementById('ui-crear').style.display = 'block';
             document.getElementById('ui-ocupado').style.display = 'none';
             document.getElementById('selection-card').style.display = 'none';
             document.getElementById('btn-confirm').style.display = 'block';
             document.getElementById('btn-update-pago').style.display = 'none';
+            btnConfirm.disabled = false; // Permitir confirmar sin foto si se desea
         }
         document.getElementById('modal').style.display = 'flex';
     }
 
-    async function subirImagen() {
-        if(!fileInput.files) return "";
+    async function subirImagenDirecta() {
+        if(!fileInput.files || fileInput.files.length === 0) return "";
         loading.style.display = "flex";
         try {
-            const options = { maxSizeMB: 0.7, maxWidthOrHeight: 1024, useWebWorker: true };
-            const compressed = await imageCompression(fileInput.files, options);
             const formData = new FormData();
-            formData.append('file', compressed);
+            formData.append('file', fileInput.files);
             formData.append('upload_preset', UPLOAD_PRESET);
             const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
             const data = await res.json();
+            if(data.error) throw new Error(data.error.message);
             return data.secure_url || "";
-        } catch(e) { alert("Error al procesar: " + e.message); return ""; }
-        finally { loading.style.display = "none"; }
+        } catch(e) { 
+            alert("Error de subida: " + e.message); 
+            return ""; 
+        } finally { 
+            loading.style.display = "none"; 
+        }
     }
 
     document.getElementById('btn-confirm').onclick = async () => {
-        const url = await subirImagen();
-        await addDoc(collection(db, "reservas_salon"), { fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente" });
+        const url = await subirImagenDirecta();
+        await addDoc(collection(db, "reservas_salon"), { 
+            fecha: window.selectedDate, uf: selUF.uf, inquilino: selUF.inquilino, 
+            comprobanteUrl: url, pago: url ? "Pagado" : "Pendiente" 
+        });
         window.open(`https://wa.me/549${MASTER_KEY}?text=*RESERVA SUM*%0AUF: ${selUF.uf}%0AFecha: ${window.selectedDate}${url ? '%0ALink: '+url : ''}`);
         closeM();
     };
 
     document.getElementById('btn-update-pago').onclick = async () => {
-        const url = await subirImagen();
-        if(!url) { alert("Seleccioná una foto válida"); return; }
-        await updateDoc(doc(db, "reservas_salon", window.currentResId), { comprobanteUrl: url, pago: "Pagado" });
+        const url = await subirImagenDirecta();
+        if(!url) { alert("Por favor, selecciona una foto válida primero"); return; }
+        await updateDoc(doc(db, "reservas_salon", window.currentResId), { 
+            comprobanteUrl: url, pago: "Pagado" 
+        });
         window.open(`https://wa.me/549${MASTER_KEY}?text=*PAGO ACTUALIZADO*%0AUF: ${selUF.uf}%0ALink: ${url}`);
         closeM();
     };
@@ -183,7 +200,12 @@
             const d = document.createElement('div');
             d.style.padding = "15px"; d.style.color = "white"; d.style.borderBottom = "1px solid #2a3942";
             d.innerHTML = `UF ${item.uf} - ${item.inquilino}`;
-            d.onclick = () => { selUF = item; document.getElementById('selection-card').style.display = "block"; document.getElementById('label-uf').innerText = `UF ${item.uf}`; resDiv.style.display = "none"; };
+            d.onclick = () => { 
+                selUF = item; 
+                document.getElementById('selection-card').style.display = "block"; 
+                document.getElementById('label-uf').innerText = `UF ${item.uf}`; 
+                resDiv.style.display = "none"; 
+            };
             resDiv.appendChild(d);
         });
         resDiv.style.display = "block";
@@ -196,7 +218,7 @@
             await deleteDoc(doc(db, "reservas_salon", window.currentResId));
             window.open(`https://wa.me/549${MASTER_KEY}?text=*ELIMINADO*%0AUF: ${selUF.uf}`);
             cerrarSeguridad(); closeM();
-        } else alert("Error");
+        } else alert("Clave Incorrecta");
     };
     window.closeM = () => { document.getElementById('modal').style.display = 'none'; loading.style.display = "none"; }
     init();
