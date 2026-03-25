@@ -139,15 +139,7 @@ box-sizing: border-box;
     <i class="fas fa-home"></i>
 </a>
 
-<div id="login-screen" class="modal" style="display:flex">
-    <div class="modal-content">
-        <h3 style="text-align:center; margin-bottom:15px">Seguridad Requerida</h3>
-        <input id="login-pass" type="password" class="input" placeholder="Clave Administrativa">
-        <button onclick="login()" class="btn blue">AUTORIZAR</button>
-    </div>
-</div>
-
-<div id="main-content" class="hidden">
+<div id="main-content">
     <div id="calendar"></div>
 </div>
 
@@ -170,8 +162,8 @@ box-sizing: border-box;
         </div>
 
         <button class="btn gray" onclick="cerrar()">Cerrar</button>
-        <button class="btn red" onclick="logout()" style="margin-top:20px; font-size:10px">SALIR DEL SISTEMA</button>
-    </div>
+        
+        </div>
 </div>
 
 <script type="module">
@@ -188,7 +180,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- LÓGICA DE LOGIN ---
+/* [MODO COMENTARIO] LÓGICA DE LOGIN INTERNO
 window.login = () => {
     const p = document.getElementById("login-pass").value;
     if(p === "1131552679") {
@@ -207,6 +199,7 @@ if(localStorage.getItem("salon_auth") === "true") {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("main-content").classList.remove("hidden");
 }
+*/
 
 let dataUFs = [], reservas = [], selUF = null;
 
@@ -354,6 +347,7 @@ document.getElementById('btn-delete').onclick = async () => {
     try {
         await deleteDoc(doc(db, "reservas_salon", window.idDoc));
         
+        // Sincronización con el Hub al borrar
         actualizarHub("Sin reservas próximas");
 
         const msg = `*CANCELACIÓN SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n❌ Estado: CANCELADA`;
