@@ -6,6 +6,7 @@
 <title>SUM PRO - Gestión</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
 /* 🌌 BASE */
@@ -15,6 +16,26 @@ font-family:-apple-system,sans-serif;
 background: radial-gradient(circle at top,#0f2027,#0b141a);
 color:#fff;
 overflow-x: hidden;
+}
+
+/* 🏠 BOTÓN VOLVER AL HUB */
+.btn-home {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 9999999;
+    background: rgba(37, 99, 235, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
 }
 
 /* 📅 CALENDARIO */
@@ -104,6 +125,8 @@ box-sizing: border-box;
 .red{ background: linear-gradient(135deg,#ff5858,#ff2e2e); color:#fff; }
 .gray{ background: #333; color:#bbb; }
 
+.hidden { display: none !important; }
+
 @media(max-width:480px){
 #calendar{height:80vh;}
 }
@@ -112,7 +135,21 @@ box-sizing: border-box;
 
 <body>
 
-<div id="calendar"></div>
+<a href="https://vectorescomprados-pixel.github.io/Gestion-de-Consorcios/" class="btn-home">
+    <i class="fas fa-home"></i>
+</a>
+
+<div id="login-screen" class="modal" style="display:flex">
+    <div class="modal-content">
+        <h3 style="text-align:center; margin-bottom:15px">Seguridad Requerida</h3>
+        <input id="login-pass" type="password" class="input" placeholder="Clave Administrativa">
+        <button onclick="login()" class="btn blue">AUTORIZAR</button>
+    </div>
+</div>
+
+<div id="main-content" class="hidden">
+    <div id="calendar"></div>
+</div>
 
 <div id="modal" class="modal">
     <div class="modal-content">
@@ -133,6 +170,7 @@ box-sizing: border-box;
         </div>
 
         <button class="btn gray" onclick="cerrar()">Cerrar</button>
+        <button class="btn red" onclick="logout()" style="margin-top:20px; font-size:10px">SALIR DEL SISTEMA</button>
     </div>
 </div>
 
@@ -142,13 +180,33 @@ import { getFirestore, collection, addDoc, onSnapshot, getDocs, doc, deleteDoc, 
 
 const PHONE = "5491131552679"; 
 const firebaseConfig = {
-    apiKey: "AIzaSyDx...", // Asegúrate de completar esto
+    apiKey: "AIzaSyDxw26xM3pliNxo79LdvWkr0uOGdvCgiIo",
     authDomain: "gestionuf-remoto.firebaseapp.com",
     projectId: "gestionuf-remoto"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// --- LÓGICA DE LOGIN ---
+window.login = () => {
+    const p = document.getElementById("login-pass").value;
+    if(p === "1131552679") {
+        localStorage.setItem("salon_auth", "true");
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("main-content").classList.remove("hidden");
+    } else { alert("Clave incorrecta"); }
+};
+
+window.logout = () => {
+    localStorage.removeItem("salon_auth");
+    location.reload();
+};
+
+if(localStorage.getItem("salon_auth") === "true") {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("main-content").classList.remove("hidden");
+}
 
 let dataUFs = [], reservas = [], selUF = null;
 
@@ -233,6 +291,14 @@ const showReservaInfo = () => {
     document.getElementById('info-uf').innerText = `UF ${selUF.UF} - ${selUF.Inquilino}`;
 };
 
+// --- ACTUALIZAR HUB CENTRAL ---
+async function actualizarHub(texto) {
+    try {
+        const ref = doc(db, "resumen_consorcio", "estado_actual");
+        await updateDoc(ref, { proximo_evento: texto });
+    } catch (e) { console.log("Hub no inicializado"); }
+}
+
 /* BUSCADOR Y FUNCIÓN BORRAR */
 document.getElementById('search').oninput = e => {
     const v = e.target.value.toLowerCase().trim();
@@ -273,6 +339,9 @@ document.getElementById('btn-save').onclick = async () => {
             await addDoc(collection(db, "reservas_salon"), datos);
         }
 
+        // Sincronización con el Hub
+        actualizarHub(`${formatFecha(window.fechaSel)} - UF ${selUF.UF}`);
+
         const msg = `*RESERVA SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n✅ Estado: CONFIRMADA`;
         setWA(msg);
         alert("¡Éxito!");
@@ -284,6 +353,9 @@ document.getElementById('btn-delete').onclick = async () => {
     if(!confirm("¿Cancelar esta reserva?")) return;
     try {
         await deleteDoc(doc(db, "reservas_salon", window.idDoc));
+        
+        actualizarHub("Sin reservas próximas");
+
         const msg = `*CANCELACIÓN SUM*\n📅 Fecha: ${formatFecha(window.fechaSel)}\n🏠 UF: ${selUF.UF}\n👤 Inquilino: ${selUF.Inquilino}\n❌ Estado: CANCELADA`;
         setWA(msg);
         document.getElementById('btn-delete').style.display = "none";
@@ -300,6 +372,7 @@ document.getElementById('btn-clear-test').onclick = async () => {
         const batch = writeBatch(db);
         snap.docs.forEach(d => batch.delete(d.ref));
         await batch.commit();
+        actualizarHub("Sin reservas próximas");
         alert("Sistema Limpio");
         cerrar();
     } catch(e) { alert("Error al limpiar"); }
