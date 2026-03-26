@@ -1,0 +1,22 @@
+{
+  "short_name": "Cocheras",
+  "name": "Sistema Control Cocheras V9",
+  "icons": [
+    {
+      "src": "icono-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icono-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0b141a",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#3b82f6"
+}
